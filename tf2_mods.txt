@@ -1,0 +1,51 @@
+result.layers:Distance: Apply this to a mask. Every point will receive the distance from the edge of the mask as its value.
+result.layers.Map: Map the values of a map from a range to another range. If the last param is true, the values that were outside from the initial range are set to the limits of the new range 
+
+bounds go from - realSize / 2 to realSize / 2 (used by rivers)
+mapSize is realSize / 4 (used by noise)
+
+area: 12km x 12km
+mapSize: 1000/2500
+bounds: -2000/5500
+
+
+Mods to make:
+
+Terrain Generator:
+-------------------
+todo:
+
+- Forced Plains / Flat Land (check smoothen terrain from tropical ext)
+- High Plateau / High Area of map (veeery big scale noise with high elevation, similar to mesa but with much higher linear blending, maybe double mask it so it doesn't appear to often)
+- crater (random holes maybe?, should be rare)
+- trench (overwrite lowland snake with steep blending, maybe double mask it so it doesnt cover whole map)
+- stalagmites (rare small points with big elevation added to heightmap, can also appear in water!)
+- underwater noise maybe?
+
+-Assets:
+forests
+ - big and small
+ - different trees
+rocks
+
+- check different map sizes
+ - make rivers and lakes adjust to size
+ - make amount of stalagmites adjust
+
+OTHER GENERATORS
+-------------------
+Default: /
+High Peaks: /
+Desert Ext: /
+Ultime Loca: /
+Terrain Fever:  /
+Temperate Ext: /
+Tropical Ext: 
+
+
+Dynamic Towns:
+----------------
+Spawn new Towns  (chance based on town density and amount of towns) https://transportfever2.com/wiki/api/modules/api.cmd.html  make.createTowns(towns)
+Towns in danger of disappearing (warning that a town can disappear at any moment)
+	- when no supplies
+Chance that towns in danger suddenlly disappear (make.removeTown(townEntity))
