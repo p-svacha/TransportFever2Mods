@@ -23,7 +23,7 @@ return {
 			key = "coastalLakesSize",
 			name = _("Size of Coastal Lakes"),
 			values = {"", "", "", "", "", "", "", "", "", ""},
-			defaultIndex = 5,
+			defaultIndex = 4,
 			uiType = "SLIDER",
 		},
 		{
@@ -214,6 +214,7 @@ return {
 		local getRandomMask = function(coverageRatio, coverageMode, blendingRatio, blobSize, irregularity)
 
 			local mask = mkTemp:Get()
+			result.layers:Constant(mask, 0)
 			local tempDist = mkTemp:Get()
 
 			tempDist = getLayeredPerlinNoise(irregularity, 1 / blobSize, 2, 0.5, 0.001, 1)
@@ -381,14 +382,14 @@ return {
 
 		-- ##################### Create Land mask
 		local landMaskGradientWidth = 600 -- over how big of a width the terrain can start being raised around water
-		local maxCoastalPlaneWidth = 400
+		local maxCoastalPlaneWidth = 600
 
 		local map_land_mask = mkTemp:Get() -- All terrain changes applied to land should use this mask!
 		result.layers:Map(map_water_mask, map_land_mask, {1, 0}, {0, 1}, true)
 		result.layers:Distance(map_land_mask, map_land_mask)
 
 		-- add some detail that creates coastal planes in some areas of the map
-		local map_land_mask_detail_big = getLayeredPerlinNoise(3, 1 / 800, 2, 0.5, -maxCoastalPlaneWidth, maxCoastalPlaneWidth / 2) -- broad detail that creates coastal planes in some areas of the map
+		local map_land_mask_detail_big = getLayeredPerlinNoise(5, 1 / 800, 2, 0.5, -maxCoastalPlaneWidth, maxCoastalPlaneWidth / 4) -- broad detail that creates coastal planes in some areas of the map
 		result.layers:Add(map_land_mask_detail_big, map_land_mask, map_land_mask)
 		mkTemp:Restore(map_land_mask_detail_big)
 
@@ -427,13 +428,14 @@ return {
 		-- #### Dunes
 		-- #### Classic Mountain Ridges
 		-- #### Ripples
+		-- #### High Elevation Areas
 		-- ###########################################################################################################
 
 		-- ##################### Canyons / Coastal Cliffs
 		local canyonMap = mkTemp:Get()
 
 		local canyonWidth = 0.9 -- how much space there is in between the cliffs
-		local canyonHeight = 0.26 -- how high the cliffs are
+		local canyonHeight = 0.22 -- how high the cliffs are
 		local canyonDistance = 9500
 		
 		local canyonMapSizeX = math.max(math.ceil(params.mapSizeX / 1000 * 2), 2)
@@ -478,7 +480,7 @@ return {
 		result.layers:Mul(cutoff, canyonMap, canyonMap)
 		result.layers:Map(canyonMap, cutoff, {1, 0})
 		
-		--desertlayers.MakeCanyonLayer(result.layers, mkTemp, canyonConfig, canyonMap, distanceMap, result.heightmapLayer) -- add to final heightmap
+		desertlayers.MakeCanyonLayer(result.layers, mkTemp, canyonConfig, canyonMap, distanceMap, result.heightmapLayer) -- add to final heightmap
 
 		mkTemp:Restore(distanceMap)
 		mkTemp:Restore(canyonMap)
@@ -584,7 +586,7 @@ return {
 		mkTemp:Restore(map_temp_mask)
 
 		result.layers:Mul(hm_final, map_land_mask, hm_final) -- apply land mask
-		--result.layers:Add(hm_final, result.heightmapLayer, result.heightmapLayer) -- add to final heightmap
+		result.layers:Add(hm_final, result.heightmapLayer, result.heightmapLayer) -- add to final heightmap
 		mkTemp:Restore(hm_final)
 
 		-- ##################### Rare Average Mountains (credits to Terrain Fever mod by Haviland)
@@ -664,13 +666,13 @@ return {
 		mkTemp:Restore(am_mult2)
 		mkTemp:Restore(am_multFinal)		
 		
-		local map_temp_mask = getRandomMask(0.3, 0, 0.2, math.random(4000, 8000), 3)
+		local map_temp_mask = getRandomMask(0.32, 0, 0.2, math.random(4000, 8000), 3)
 		result.layers:Herp(map_temp_mask, map_temp_mask, {0, 1}) -- convert linear to smooth interpolation
 		result.layers:Mul(am_final, map_temp_mask, am_final) -- apply random mask
 		mkTemp:Restore(map_temp_mask)
 
 		result.layers:Mul(am_final, map_land_mask, am_final) -- apply land mask
-		--result.layers:Add(am_final, result.heightmapLayer, result.heightmapLayer) -- add to final heightmap
+		result.layers:Add(am_final, result.heightmapLayer, result.heightmapLayer) -- add to final heightmap
 		mkTemp:Restore(am_final)
 
 		-- ##################### Rolling Hills that cover some part of the map (credits to Terrain Fever mod by Haviland)
@@ -706,31 +708,30 @@ return {
 		mkTemp:Restore(map_temp_mask)
 
 		result.layers:Mul(rh_final, map_land_mask, rh_final) -- apply land mask
-		--result.layers:Add(rh_final, result.heightmapLayer, result.heightmapLayer) -- add to final heightmap
+		result.layers:Add(rh_final, result.heightmapLayer, result.heightmapLayer) -- add to final heightmap
 		mkTemp:Restore(rh_final)
 
 
 		-- ##################### Mesa / Tafelberg
 
 		local maxMesaHeight = 180 -- how high the mesas are
-		local mesaCoverageArea = 0.45 -- how much of the map the mesas cover
+		local mesaCoverageArea = 0.36 -- how much of the map the mesas cover
 		local mesaSize = math.random(4000, 8000) -- how big the individual mesas are
 
 		local map_mesa = getLayeredPerlinNoise(1, 1 / 2000, 2, 0.5, 0, maxMesaHeight)
 
 		local map_mesa_mask = getRandomMask(mesaCoverageArea, 0, 0.02, mesaSize, 4)
 		Exlerp(map_mesa_mask, map_mesa_mask, 50) -- convert linear to exponential interpolation
-
 		result.layers:Mul(map_mesa, map_mesa_mask, map_mesa)
 		mkTemp:Restore(map_mesa_mask)
 
 		result.layers:Mul(map_mesa, map_land_mask, map_mesa) -- apply land mask
-		--result.layers:Add(map_mesa, result.heightmapLayer, result.heightmapLayer) -- add to final heightmap
+		result.layers:Add(map_mesa, result.heightmapLayer, result.heightmapLayer) -- add to final heightmap
 
 		mkTemp:Restore(map_mesa)
 
 		-- ##################### Soft dunes covering the whole land
-		local softDunesStrength = 20
+		local softDunesStrength = 15
 
 		local map_soft_dunes = mkTemp:Get()
 		result.layers:GradientNoise(map_soft_dunes, {
@@ -744,18 +745,18 @@ return {
 		mkTemp:Restore(map_temp_mask)
 
 		result.layers:Mul(map_soft_dunes, map_land_mask, map_soft_dunes) -- apply land mask
-		--result.layers:Add(map_soft_dunes, result.heightmapLayer, result.heightmapLayer) -- add to final heightmap
+		result.layers:Add(map_soft_dunes, result.heightmapLayer, result.heightmapLayer) -- add to final heightmap
 		mkTemp:Restore(map_soft_dunes)
 
 		-- ##################### Soft Rolling hills offset covering the whole land
 		local map_soft_rolling_hills = getLayeredPerlinNoise(3, 1 / 1000, 2, 0.5, -40, 60)
 		result.layers:Mul(map_soft_rolling_hills, map_land_mask, map_soft_rolling_hills) -- apply land mask
-		--result.layers:Add(map_soft_rolling_hills, result.heightmapLayer, result.heightmapLayer) -- add to final heightmap
+		result.layers:Add(map_soft_rolling_hills, result.heightmapLayer, result.heightmapLayer) -- add to final heightmap
 		mkTemp:Restore(map_soft_rolling_hills)
 
 		-- ##################### Dunes covering parts of the land
 
-		local dunesStrength = math.random(40, 60) -- how big the dunes are
+		local dunesStrength = 40 -- how big the dunes are
 		local dunesCoverageArea = 0.25 -- how much of the map the dunes cover
 		local dunesBlending = 0.35 -- how soft the dunes blend into the areas without them
 		local dunesAreasSize = math.random(4000, 12000) -- how big the individual areas containing dunes are 
@@ -771,7 +772,7 @@ return {
 		result.layers:Mul(map_scattered_dunes, map_temp_mask, map_scattered_dunes)
 		mkTemp:Restore(map_temp_mask)
 
-		--result.layers:Add(map_scattered_dunes, result.heightmapLayer, result.heightmapLayer) -- add to final heightmap
+		result.layers:Add(map_scattered_dunes, result.heightmapLayer, result.heightmapLayer) -- add to final heightmap
 		mkTemp:Restore(map_scattered_dunes)
 		
 
@@ -796,14 +797,14 @@ return {
 		})
 
 		result.layers:Mul(map_scattered_ridges, map_land_mask, map_scattered_ridges)
-		--result.layers:Add(map_scattered_ridges, result.heightmapLayer, result.heightmapLayer) -- add to final heightmap
+		result.layers:Add(map_scattered_ridges, result.heightmapLayer, result.heightmapLayer) -- add to final heightmap
 		mkTemp:Restore(map_scattered_ridges)
 
 
 		-- ##################### Soft Ripples covering parts of the land
 		local map_soft_ridges = mkTemp:Get()
 
-		local noiseStrength = 80 -- how big the ripples are
+		local noiseStrength = 60 -- how big the ripples are
 		local ripplesCoverageArea = 0.25 -- how much of the map the ripples cover
 		local ripplesBlending = 0.35 -- how soft the ripples blend into the areas without them
 		local ripplesAreasSize = 7000 -- how big the individual areas containing ripples are
@@ -812,17 +813,88 @@ return {
 		result.layers:Map(map_soft_ridges, map_soft_ridges, {0, 4}, {0, noiseStrength * 1.2}, false)
 
 		local map_temp_mask = getRandomMask(ripplesCoverageArea, 0, ripplesBlending, ripplesAreasSize, 4)
-
 		result.layers:Mul(map_soft_ridges, map_temp_mask, map_soft_ridges)
 		mkTemp:Restore(map_temp_mask)
 
 		result.layers:Mul(map_soft_ridges, map_land_mask, map_soft_ridges)
-		--result.layers:Add(map_soft_ridges, result.heightmapLayer, result.heightmapLayer) -- add to final heightmap
+		result.layers:Add(map_soft_ridges, result.heightmapLayer, result.heightmapLayer) -- add to final heightmap
 
 		mkTemp:Restore(map_soft_ridges)
 
+		-- ##################### High Elevation Areas
+		local map_high_areas = getLayeredPerlinNoise(2, 1 / 12000, 2, 0.5, 200, 300)
+
+		local map_temp_mask = getRandomMask(0.35, 0, 0.1, 12000, 2)
+		result.layers:Herp(map_temp_mask, map_temp_mask, {0, 1}) -- convert linear to smooth interpolation
+		result.layers:Mul(map_high_areas, map_temp_mask, map_high_areas) -- apply random mask
+		mkTemp:Restore(map_temp_mask)
+
+		result.layers:Mul(map_high_areas, map_land_mask, map_high_areas) -- apply land mask
+		result.layers:Add(map_high_areas, result.heightmapLayer, result.heightmapLayer) -- add to final heightmap
+		mkTemp:Restore(map_high_areas)
+
+		mkTemp:Restore(map_high_areas)
+
 		-- ###########################################################################################################
-		-- #### Step 3: Assets (todo)
+		-- #### Step 3 - Heightmap Post Processing (flattening and smoothing)
+		-- ###########################################################################################################
+
+		-- ##################### Flatten some areas
+		local numFlatLayers = 8
+		local highPlateauChance = 0.33
+
+		for i = 1, numFlatLayers do
+
+			local flattenHeight = math.random(20, 150) -- low plateau
+
+			if math.random() < highPlateauChance then
+				flattenHeight = math.random(150, 800) -- high plateau
+			end
+
+			debugPrint("Creating flat areas at elevation " .. (flattenHeight))
+
+			local flattenRange = math.random(10,20) -- all elevations of flattenHeight +- flattenRange will be flattened to flattenHeight
+			local flattenBlendingRange = math.random(60,70) -- all elevations of flattenHeight +- (flattenRange + flattenBlendingRange) will be blended into the flatten spot
+			local flattenNoiseStrength = math.random(5,20) -- the flat areas are not 100% flat, they have some noise 20-50
+			local flattenedAreasSize = math.random(3000, 6000) -- how big the individual areas that get flattened are
+			local map_elevation_mask = mkTemp:Get()
+
+			local map_flat_map = mkTemp:Get()
+			map_flat_map = getLayeredPerlinNoise(2, 1 / 1000, 2, 0.5, flattenHeight - flattenNoiseStrength, flattenHeight + flattenNoiseStrength)
+
+			-- create a mask for this elevation (that covers the whole map)
+			result.layers:Pwlerp(result.heightmapLayer, map_elevation_mask, {-99999, flattenHeight - flattenRange - flattenBlendingRange, flattenHeight - flattenRange, flattenHeight + flattenRange, flattenHeight + flattenRange + flattenBlendingRange, 99999}, {0, 0, 1, 1, 0, 0})
+
+			-- create a mask so only small parts of the map with this elevation will be flattened
+			local map_area_mask = mkTemp:Get()
+			map_area_mask = getRandomMask(0.34, 0, 0.1, flattenedAreasSize, 2)
+			result.layers:Herp(map_area_mask, map_area_mask, {0, 1}) -- convert linear to smooth interpolation
+			result.layers:Mul(map_elevation_mask, map_area_mask, map_elevation_mask) -- apply area mask
+			mkTemp:Restore(map_area_mask)
+
+			result.layers:Herp(map_elevation_mask, map_elevation_mask, {0, 1}) -- convert linear to smooth interpolation
+
+			-- cut out the parts of the heightmap that will be replaced by the flat spots
+			local invertedHeightMap = mkTemp:Get()	
+			result.layers:Map(result.heightmapLayer, invertedHeightMap, {0,1}, {0,-1}, false)
+			result.layers:Mul(invertedHeightMap, map_elevation_mask, invertedHeightMap)
+			result.layers:Mul(invertedHeightMap, map_land_mask, invertedHeightMap)
+			result.layers:Add(result.heightmapLayer, invertedHeightMap, result.heightmapLayer) -- create holes into the real heightmap at height 0
+			mkTemp:Restore(invertedHeightMap)
+
+			-- fill the cutout with the flat spots
+			result.layers:Mul(map_flat_map, map_elevation_mask, map_flat_map)
+			result.layers:Mul(map_flat_map, map_land_mask, map_flat_map)
+			result.layers:Add(map_flat_map, result.heightmapLayer, result.heightmapLayer)
+
+			--result.layers:Copy(map_flat_map, result.heightmapLayer) -- just to test
+			
+			mkTemp:Restore(map_elevation_mask)
+			mkTemp:Restore(map_flat_map)
+		end
+
+		-- ###########################################################################################################
+		-- #### Step 4 - Assets
 		-- ###########################################################################################################
 
 		local t1 = mkTemp:Get()
@@ -843,11 +915,11 @@ return {
 			valleyFactor = 0.6, -- lower means softer valleys detection, more trees (0.8)
 		}
 		
-		result.layers:PushColor("#007777")
-		--result.forestMap, result.treesMapping, result.assetsMap, result.assetsMapping = temperateassetsgen.Make(
-		--	result.layers, assetsConfig, mkTemp, result.heightmapLayer, t1, t2
-		--)
-		result.layers:PopColor()
+
+		result.forestMap, result.treesMapping, result.assetsMap, result.assetsMapping = temperateassetsgen.Make(
+			result.layers, assetsConfig, mkTemp, result.heightmapLayer, t1, t2
+		)
+
 
 		mkTemp:Restore(t1)
 		mkTemp:Restore(t2)
@@ -863,10 +935,10 @@ return {
 
 		-- mkTemp:Restore(distributionMap)
 		-- mkTemp:Restore(highMountainMask)
-		--mkTemp:Restore(result.forestMap)
-		--mkTemp:Restore(result.assetsMap)
+		mkTemp:Restore(result.forestMap)
+		mkTemp:Restore(result.assetsMap)
 		mkTemp:Finish()
-		-- maputil.PrintGraph(result)
+		--maputil.PrintGraph(result)
 	
 		return result
 	end
