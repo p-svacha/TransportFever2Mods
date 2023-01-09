@@ -239,7 +239,6 @@ return {
 			mkTemp:Restore(tempDist)
 			
 			return mask
-
 		end
 
 		-- ###########################################################################################################
@@ -312,7 +311,7 @@ return {
 				baseProbability = 0.5,
 				minDist = 0,
 				startWidth = math.random(120, 400),
-				endWidth = math.random(20, 40),
+				endWidth = math.random(0, 40),
 				curvature = math.random(200, 800) / 1000,
 				is_winding = math.random() < 0.5 and true or false
 			  }
@@ -840,7 +839,7 @@ return {
 		-- ###########################################################################################################
 
 		-- ##################### Flatten some areas
-		local numFlatLayers = 8
+		local numFlatLayers = 7
 		local highPlateauChance = 0.33
 
 		for i = 1, numFlatLayers do
@@ -848,7 +847,7 @@ return {
 			local flattenHeight = math.random(20, 150) -- low plateau
 
 			if math.random() < highPlateauChance then
-				flattenHeight = math.random(150, 800) -- high plateau
+				flattenHeight = math.random(150, 500) -- high plateau
 			end
 
 			debugPrint("Creating flat areas at elevation " .. (flattenHeight))
@@ -898,13 +897,10 @@ return {
 		-- ###########################################################################################################
 
 		local t1 = mkTemp:Get()
-		local t2 = mkTemp:Get()
-
-		local forestAmount = 0.5
 
 		local assetsConfig =  {
 			-- GENERIC
-			humidity = forestAmount / 2.5,
+			humidity = 0.2,
 			water = water,
 			-- LEVEL 3
 			hillsLowLimit = 20, -- relative [m]
@@ -917,12 +913,12 @@ return {
 		
 
 		result.forestMap, result.treesMapping, result.assetsMap, result.assetsMapping = temperateassetsgen.Make(
-			result.layers, assetsConfig, mkTemp, result.heightmapLayer, t1, t2
+			result.layers, assetsConfig, mkTemp, result.heightmapLayer, t1, map_land_distance
 		)
 
 
 		mkTemp:Restore(t1)
-		mkTemp:Restore(t2)
+
 	
 
 		-- ###########################################################################################################
