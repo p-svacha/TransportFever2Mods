@@ -2,37 +2,25 @@ result.layers:Distance: Apply this to a mask. Every point will receive the dista
 result.layers.Map: Map the values of a map from a range to another range. If the last param is true, the values that were outside from the initial range are set to the limits of the new range 
 Herp: Converts linear to smooth interpolation
 Exlerp: Converts linear to exponentail interpolation
+Grad: (last param = 2): Returns the first derivative of a map, meaning the steepness of each point
+Laplace: Returns the second derivative of a map, meaning highlighting the edges (not that useful)
+Percolation: Flood fills a white noise map
 
 bounds go from - realSize / 2 to realSize / 2 (used by rivers)
 mapSize is realSize / 4 (used by noise)
 
 area: 12km x 12km
-mapSize: 1000/2500
-bounds: -2000/5500
-
+mapSize: 0 - 3000
+bounds: -6000 - 6000
 
 Mods to make:
 
 Terrain Generator:
 -------------------
-todo (required):
-
-- Rocks
-
-- Add params for:
-  Amount of flat areas
-  Amount of forests
-  Amount of rocks
-
-- Check different map sizes
-  make rivers and lakes adjust to size
-
-
-todo maybe:
-- trenches (overwrite lowland snake with steep blending, maybe double mask it so it doesnt cover whole map)
-- stalagmites (rare small points with big elevation added to heightmap, can also appear in water!)
-- underwater noise maybe?
-- check asset gen of other generators
+todo
+- multiple stalagmites (varying in height and radius) (maybe 4 in megalomaniac)
+- stone circles (1 or 2 if large+)
+- deserts if possible(check snow from uloc)?
 
 OTHER GENERATORS
 -------------------

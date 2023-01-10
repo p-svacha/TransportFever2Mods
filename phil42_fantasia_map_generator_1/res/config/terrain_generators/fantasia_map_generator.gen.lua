@@ -14,42 +14,63 @@ return {
 	params = {
 		{
 			key = "coastalLakesAmount",
-			name = _("Amount of Coastal Lakes"),
-			values = {"", "", "", "", "", "", "", "", "", ""},
+			name = _("Lakes"),
+			values = {"", "", "", "", ""},
 			defaultIndex = 2,
 			uiType = "SLIDER",
 		},
 		{
 			key = "coastalLakesSize",
-			name = _("Size of Coastal Lakes"),
-			values = {"", "", "", "", "", "", "", "", "", ""},
-			defaultIndex = 4,
-			uiType = "SLIDER",
-		},
-		{
-			key = "mountainRidgesAmount",
-			name = _("Amount of Mountain Ridges"),
-			values = {"", "", "", "", "", "", "", "", "", ""},
-			defaultIndex = 4,
-			uiType = "SLIDER",
-		},
-		{
-			key = "mountainRidgesPeakHeight",
-			name = _("Mountain Ridges Peak Height"),
-			values = {"", "", "", "", "", "", "", "", "", ""},
+			name = _("Lake Size"),
+			values = {"", "", "", "", "", "", "", "", ""},
 			defaultIndex = 4,
 			uiType = "SLIDER",
 		},
 		{
 			key = "riversAmount",
-			name = _("Amount of Rivers"),
-			values = {"", "", "", "", "", "", "", "", "", ""},
+			name = _("Rivers"),
+			values = {"", "", "", "", ""},
 			defaultIndex = 2,
+			uiType = "SLIDER",
+		},
+		{
+			key = "mountainRidgesAmount",
+			name = _("Mountains"),
+			values = {"", "", "", "", "", "", "", "", ""},
+			defaultIndex = 4,
+			uiType = "SLIDER",
+		},
+		{
+			key = "mountainRidgesPeakHeight",
+			name = _("Mountain Height"),
+			values = {"", "", "", "", "", "", "", "", ""},
+			defaultIndex = 4,
 			uiType = "SLIDER",
 		},
 		{
 			key = "canyons",
 			name = _("Coastal Cliffs"),
+			values = { "", "", "", "", "", "", "" },
+			defaultIndex = 3,
+			uiType = "SLIDER",
+		},
+		{
+			key = "plateausAmount",
+			name = _("Plateaus"),
+			values = { "", "", "", "", "", "", "" },
+			defaultIndex = 3,
+			uiType = "SLIDER",
+		},
+		{
+			key = "flatAreasAmount",
+			name = _("Flat Areas"),
+			values = { "", "", "", "", "", "", "" },
+			defaultIndex = 3,
+			uiType = "SLIDER",
+		},		
+		{
+			key = "forestAmount",
+			name = _("Forests"),
 			values = { "", "", "", "", "", "", "" },
 			defaultIndex = 3,
 			uiType = "SLIDER",
@@ -75,6 +96,9 @@ return {
 		local mountainRidgesPeakHeight = params.mountainRidgesPeakHeight
 		local riversAmount = params.riversAmount
 		local canyon = params.canyons / 6 + 0.2
+		local plateausAmount = params.plateausAmount
+		local flatAreasAmount = params.flatAreasAmount
+		local forestAmount = params.forestAmount
 
 		-- ###########################################################################################################
 		-- #### INITIALIZE
@@ -89,6 +113,7 @@ return {
 		local mkTemp = layersutil.TempMaker.new()
 
 		local baseHeight = 1
+		local mapSize = params.mapSizeX * params.mapSizeY
 
 		-- ###########################################################################################################
 		-- #### FUNCTIONS
@@ -252,12 +277,16 @@ return {
 		local map_water_mask = mkTemp:Get() -- All terrain changes applied to water should use this mask!
 
 		-- ##################### Lakes
-		for pts = 1, coastalLakesAmount do
+		local numLakes = (mapSize * coastalLakesAmount / 9000000)
+		numLakes = math.round(numLakes, 1)
+		debugPrint("Creating " .. numLakes .. " Coastal Lakes")
+
+		for pts = 1, numLakes do
 			local map_lakes_mask = mkTemp:Get()
 			result.layers:Constant(map_lakes_mask, 1)
 
 			
-			local lakeCoverage = 0.3 + (coastalLakesSize * 0.04)
+			local lakeCoverage = 0.3 + (coastalLakesSize * 0.04) + ((mapSize / 9000000) * 0.015)
 			local lakeIslandAmount = 0.35
 
 			local lakeOriginPoints = {}
@@ -283,13 +312,16 @@ return {
 			end
 
 		-- ##################### River Preparation	
+		local numRivers = 0.15 + (mapSize * riversAmount / 12000000)
+		numRivers = math.round(numRivers, 1)
+		debugPrint("Creating " .. numRivers .. " Rivers")
+
 		  local riverStartPoints = {{}}
 		  local riverStartAngles = {}
-		  for i = 1, riversAmount do
+		  for i = 1, numRivers do
 			  local px = math.random(0, params.mapSizeX)
 			  local py = math.random(0, params.mapSizeY)
 			  riverStartPoints[#riverStartPoints + 1] = {{ px, py }}
-			  debugPrint("River " .. i .. " source position is " .. px .. "/" .. py)
 			  riverStartAngles[#riverStartAngles + 1] = math.random(0, 360)
 		  end
 
@@ -300,18 +332,30 @@ return {
 		local rivers = {}
 		local start = mapgenutil.FindGoodRiverStart(params.bounds)
 
-		for i = 1, riversAmount do
+		local additionalSegmentsFromMapSize = (mapSize / 9000000) * 2.5
+		additionalSegmentsFromMapSize = math.clamp(0, 10)
+		additionalSegmentsFromMapSize = math.round(additionalSegmentsFromMapSize, 1)
+		local minNumSegments = 15
+		local maxNumSegments = 35 + additionalSegmentsFromMapSize
+
+		local additionalWidthFromMapSize = (mapSize / 9000000) * 200
+		additionalSegmentsFromMapSize = math.clamp(0, 1000)
+		additionalSegmentsFromMapSize = math.round(additionalSegmentsFromMapSize, 1)
+		local minStartWidth = 120
+		local maxStartWidth = 200 + additionalWidthFromMapSize
+
+		for i = 1, numRivers do
 
 			local riverConfig = {
 				depthScale = 2.2,
 				maxOrder = 10,
-				numSegments = math.random(15, 35),
+				numSegments = math.random(minNumSegments, maxNumSegments),
 				segmentLength = math.random(500, 700),
 				bounds = params.bounds,
 				baseProbability = 0.5,
 				minDist = 0,
-				startWidth = math.random(120, 400),
-				endWidth = math.random(0, 40),
+				startWidth = math.random(minStartWidth, maxStartWidth),
+				endWidth = math.random(20, 45),
 				curvature = math.random(200, 800) / 1000,
 				is_winding = math.random() < 0.5 and true or false
 			  }
@@ -320,7 +364,6 @@ return {
 			local px = (riverStartPoints[i + 1][1][1] * 4) - (params.bounds.max.x)
 			local py = (riverStartPoints[i + 1][1][2] * 4) - (params.bounds.max.y)
 			local startPos = vec2.new(px, py)
-			debugPrint("River " .. i .. " source converted position is " .. px .. "/" .. py)
 			mapgenutil.MakeRivers(rivers, riverConfig, 120000, startPos, riverStartAngles[i])
 		end
 
@@ -334,8 +377,11 @@ return {
 		mkTemp:Restore(map_rivers_mask)
 
 		-- ##################### River End Lakes
-		for i = 1, riversAmount do
-			local lake_size = math.random(600, 3000)
+		local minLakeSize = (150 + ((mapSize / 9000000) * 450)) * (1 + ((coastalLakesSize - 2) * 0.1))
+		local maxLakeSize = (300 + ((mapSize / 9000000) * 800)) * (1 + ((coastalLakesSize - 2) * 0.1))
+
+		for i = 1, numRivers do
+			local lake_size = math.random(minLakeSize, maxLakeSize)
 
 			local map_river_lakes_mask = mkTemp:Get()
 			result.layers:Constant(map_river_lakes_mask, 1)
@@ -780,8 +826,8 @@ return {
 
 		local ridgesConfig = {
 			bounds = params.bounds,
-			probabilityLow = 0.02 + (mountainRidgesAmount * 0.05),
-			probabilityHigh = 0.02 + (mountainRidgesAmount * 0.05),
+			probabilityLow = 0.02 + (mountainRidgesAmount * 0.06),
+			probabilityHigh = 0.02 + (mountainRidgesAmount * 0.06),
 			minHeight = 0 + 80 * (mountainRidgesPeakHeight / 10), 
 			maxHeight = 75 + 400 * (mountainRidgesPeakHeight / 10),
 			angle = math.random(0, 360)
@@ -821,9 +867,13 @@ return {
 		mkTemp:Restore(map_soft_ridges)
 
 		-- ##################### High Elevation Areas
+		local highElevationCoverage = 0.23 + (plateausAmount * 0.04)
+		if plateausAmount == 0 then highElevationCoverage = 0 end
+		debugPrint("Plateau Coverage = " .. highElevationCoverage)
+
 		local map_high_areas = getLayeredPerlinNoise(2, 1 / 12000, 2, 0.5, 200, 300)
 
-		local map_temp_mask = getRandomMask(0.35, 0, 0.1, 12000, 2)
+		local map_temp_mask = getRandomMask(highElevationCoverage, 0, 0.1, 12000, 2)
 		result.layers:Herp(map_temp_mask, map_temp_mask, {0, 1}) -- convert linear to smooth interpolation
 		result.layers:Mul(map_high_areas, map_temp_mask, map_high_areas) -- apply random mask
 		mkTemp:Restore(map_temp_mask)
@@ -835,22 +885,23 @@ return {
 		mkTemp:Restore(map_high_areas)
 
 		-- ###########################################################################################################
-		-- #### Step 3 - Heightmap Post Processing (flattening and smoothing)
+		-- #### Step 3 - Heightmap Post Processing (operations that overwrite parts of the heightmap)
 		-- ###########################################################################################################
 
 		-- ##################### Flatten some areas
-		local numFlatLayers = 7
-		local highPlateauChance = 0.33
+		local numFlatLayers = (flatAreasAmount * 2) + 1
+		local highFlatAreaChance = 0.3
+		debugPrint("Creating " .. numFlatLayers .. " flat area layers")
 
 		for i = 1, numFlatLayers do
 
-			local flattenHeight = math.random(20, 150) -- low plateau
+			local flattenHeight = math.random(20, 150) -- low flat area
 
-			if math.random() < highPlateauChance then
-				flattenHeight = math.random(150, 500) -- high plateau
+			if math.random() < highFlatAreaChance then
+				flattenHeight = math.random(150, 500) -- high flat area
 			end
 
-			debugPrint("Creating flat areas at elevation " .. (flattenHeight))
+			--debugPrint("Creating flat areas at elevation " .. (flattenHeight))
 
 			local flattenRange = math.random(10,20) -- all elevations of flattenHeight +- flattenRange will be flattened to flattenHeight
 			local flattenBlendingRange = math.random(60,70) -- all elevations of flattenHeight +- (flattenRange + flattenBlendingRange) will be blended into the flatten spot
@@ -892,6 +943,42 @@ return {
 			mkTemp:Restore(map_flat_map)
 		end
 
+		-- ##################### Stalagmites
+		local singleStalagmiteHeight = 300
+		local stalagmiteSize = 15
+		local stalagmiteBlend = 70
+
+		local map_single_stalagmite = mkTemp:Get()
+		map_single_stalagmite = getLayeredPerlinNoise(6, 1 / 100, 2, 0.5, 100, 200)
+
+		local stalagmitePoints = {}
+		local px = math.random(0, params.mapSizeX)
+		local py = math.random(0, params.mapSizeY)
+		stalagmitePoints[#stalagmitePoints + 1] = { px, py }
+
+		local map_temp_mask = mkTemp:Get()
+		result.layers:Constant(map_temp_mask, 1)
+		result.layers:Points(map_temp_mask,  stalagmitePoints, 0)		
+		result.layers:Distance(map_temp_mask, map_temp_mask)
+
+		-- small detail
+		local map_temp_detail = mkTemp:Get()
+		addLayeredPerlinNoise(map_temp_detail, 5, 1 / 50, 2, 0.5, -80, 0)
+		result.layers:Add(map_temp_detail, map_temp_mask, map_temp_mask)
+		mkTemp:Restore(map_temp_detail)
+		
+		-- map it to make it a valid mask
+		result.layers:Pwlerp(map_temp_mask, map_temp_mask, {-99999, -101, -100, stalagmiteSize, stalagmiteSize + stalagmiteBlend, 99999}, {0, 0, 1, 1, 0, 0})
+
+		-- add it to heightmap
+		result.layers:Mul(map_single_stalagmite, map_temp_mask, map_single_stalagmite) -- apply mask
+		mkTemp:Restore(map_temp_mask)
+
+		--result.layers:Copy(map_single_stalagmite, result.heightmapLayer) -- test
+		result.layers:Add(map_single_stalagmite, result.heightmapLayer, result.heightmapLayer) -- add to final heightmap
+
+		mkTemp:Restore(map_single_stalagmite)
+
 		-- ###########################################################################################################
 		-- #### Step 4 - Assets
 		-- ###########################################################################################################
@@ -899,27 +986,14 @@ return {
 		local t1 = mkTemp:Get()
 
 		local assetsConfig =  {
-			-- GENERIC
-			humidity = 0.2,
-			water = water,
-			-- LEVEL 3
-			hillsLowLimit = 20, -- relative [m]
-			hillsLowTransition = 20, -- relative [m]
-			-- LEVEL 4
-			treeLimit = 160, -- absolute [m] (absolute maximal height)
-			ridgeFactor = 0.6, -- lower means softer ridges detection, more trees (0.8)
-			valleyFactor = 0.6, -- lower means softer valleys detection, more trees (0.8)
+			forestAmount = forestAmount,
 		}
 		
-
 		result.forestMap, result.treesMapping, result.assetsMap, result.assetsMapping = temperateassetsgen.Make(
 			result.layers, assetsConfig, mkTemp, result.heightmapLayer, t1, map_land_distance
 		)
 
-
 		mkTemp:Restore(t1)
-
-	
 
 		-- ###########################################################################################################
 		-- #### FINALIZE
@@ -929,12 +1003,10 @@ return {
 		mkTemp:Restore(map_land_mask)
 		mkTemp:Restore(map_water_mask)
 
-		-- mkTemp:Restore(distributionMap)
-		-- mkTemp:Restore(highMountainMask)
 		mkTemp:Restore(result.forestMap)
 		mkTemp:Restore(result.assetsMap)
+
 		mkTemp:Finish()
-		--maputil.PrintGraph(result)
 	
 		return result
 	end

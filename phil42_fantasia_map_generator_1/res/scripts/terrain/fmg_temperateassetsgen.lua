@@ -128,23 +128,14 @@ data.Make = function(layers, config, mkTemp, heightMap, ridgesMap, distanceMap)
 		
 		return mask
 	end
-	
-	-- ###########################################################################################################
-	-- #### PREPARE
-	-- ###########################################################################################################
-
-	local treeLineElevation = 550
-
-	local ditheringMap = mkTemp:Get()
-	local ditheringMap2 = mkTemp:Get()
-	layers:Dithering(ditheringMap, "LOCAL")
-	layers:Dithering(ditheringMap2, "LOCAL"):SetSeed(math.random())
 
 	-- ###########################################################################################################
 	-- #### TREES & FORESTS
 	-- ###########################################################################################################
 
+	local treeLineElevation = 550
 	local forestMap = mkTemp:Get()
+	layers:Constant(forestMap, 0)
 
 	-- ##################### Single scattered trees
 	local maxSingleTreeDensity = 0.003
@@ -172,19 +163,29 @@ data.Make = function(layers, config, mkTemp, heightMap, ridgesMap, distanceMap)
 	mkTemp:Restore(map_single_trees)
 
 	-- ##################### Forests
-	local numForestLayers = 6
-	local paramForest = 4 -- 1..10
+	local numForestLayers = (config.forestAmount * 2) + 1
 	local maxSlopeForForest = 0.6 -- how steep a slope has to be for forest to stop growing
 
-	local minForestSize = 18 + (2 * paramForest)
-	local maxForestSize = 28 + (2 * paramForest)
+	debugPrint("Creating " .. numForestLayers .. " forest layers")
+
+	local minForestSize = 24 + (2 * config.forestAmount)
+	local maxForestSize = 31 + (2 * config.forestAmount)
 
 	for i = 1, numForestLayers do
 		local forestAmount = math.random(minForestSize, maxForestSize) / 100
-		local forestsSize = math.random(400, 1600)
+		local forestsSize = math.random(400, 1800)
 		local treeType = anyTree
 		local forestTreeDensity = math.random(20, 90) / 100
 		local forestBlending = math.random(1, 30) / 1000
+
+		local treeTypeRng = math.random(1, 4)
+		if treeTypeRng == 1 then
+			treeType = conifer
+		elseif treeTypeRng == 2 then
+			treeType = forest
+		elseif treeTypeRng == 3 then
+			treeType = anyTree
+		end
 
 
 		-- make make initial forests
@@ -212,17 +213,65 @@ data.Make = function(layers, config, mkTemp, heightMap, ridgesMap, distanceMap)
 		mkTemp:Restore(map_forests)
 	end
 
+	-- ##################### Coastal Forests
+	local maxCoastDensity = 0.7
+	local coastalForestAmount = 0.35 + (config.forestAmount * 0.02)
+	local coastalForestBlending = 0.05
+
+	local map_coastal_forest = mkTemp:Get()
+	map_coastal_forest = getLayeredPerlinNoise(6, 1 / 700, 2, 0.6, 0, 1)
+	layers:Pwlerp(map_coastal_forest, map_coastal_forest, {0, 1 - coastalForestAmount, 1 - coastalForestAmount + coastalForestBlending, 1, 1, 1}, {0, 0, maxCoastDensity, maxCoastDensity, maxCoastDensity, maxCoastDensity})
+
+	-- mask coasts
+	local map_distance_mask = mkTemp:Get()
+	layers:Map(distanceMap, map_distance_mask, {40, 200}, {1, 0}, true)
+	layers:Mul(map_coastal_forest, map_distance_mask, map_coastal_forest)
+	mkTemp:Restore(map_distance_mask)
+
+	-- mask that some areas of the map have less
+	local map_temp_mask = getRandomMask(0.4, 0, 0.1, 3000, 6)
+	layers:Mul(map_coastal_forest, map_temp_mask, map_coastal_forest) -- apply random mask
+	mkTemp:Restore(map_temp_mask)
+
+	-- add to forest map
+	layers:WhiteNoiseNonuniform(map_coastal_forest, map_coastal_forest)
+	layers:Map(map_coastal_forest, map_coastal_forest, {0, 1}, {0, forest}, true)
+	layers:Mask(map_coastal_forest, map_coastal_forest, forestMap)
+	mkTemp:Restore(map_coastal_forest)
+
 	-- ###########################################################################################################
 	-- #### ROCKS
 	-- ###########################################################################################################
+
 	local rocksMap = mkTemp:Get()
+	layers:Constant(rocksMap, 0)
+
+	-- ##################### Scattered rocks
+	local maxRockDensity = 0.0025
+
+	local map_single_rocks = mkTemp:Get()
+	map_single_rocks = getLayeredPerlinNoise(1, 1 / 10000, 2, 0.5, 0, maxRockDensity)
+
+	-- mask that high elevations have more rocks
+	local map_elevation_mask = mkTemp:Get()
+	layers:Map(heightMap, map_elevation_mask, {200, 800}, {1, 3}, true)
+	layers:Mul(map_single_rocks, map_elevation_mask, map_single_rocks)
+	mkTemp:Restore(map_elevation_mask)
+
+	-- mask that some areas of the map have less rocks
+	local map_temp_mask = getRandomMask(0.5, 0, 0.3, 6000, 2)
+	layers:Mul(map_single_rocks, map_temp_mask, map_single_rocks) -- apply random mask
+	mkTemp:Restore(map_temp_mask)
+
+	-- add single rocks to rock map
+	layers:WhiteNoiseNonuniform(map_single_rocks, map_single_rocks)
+	layers:Map(map_single_rocks, map_single_rocks, {0, 1}, {0, granite}, true)
+	layers:Mask(map_single_rocks, map_single_rocks, rocksMap)
+	mkTemp:Restore(map_single_rocks)
 
 	-- ###########################################################################################################
 	-- #### FINALIZE
 	-- ###########################################################################################################
-
-	mkTemp:Restore(ditheringMap)
-	mkTemp:Restore(ditheringMap2)
 
 	return forestMap, treesMapping, rocksMap, assetsMapping
 end
