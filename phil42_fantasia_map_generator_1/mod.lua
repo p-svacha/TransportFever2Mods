@@ -7,7 +7,7 @@ return {
 		name = _("Fantasia Map Generator"),
 		visible = true,
 		description = _([[Unique terrains.]]),
-		tags = { "Map", "Terrain", "Generator", "Generation", "Temperate", "European", "Hills", "Mountains", "Lakes", "Ocean", "Sea", "Misc", "Script Mod", "Random" },
+		tags = { "Map", "Terrain", "Generator", "Generation", "Temperate", "European", "Hills", "Mountains", "Random", "Rivers", "Lakes", "Misc", "Script Mod", "Peaks", "Variety", "Fantasy", "Challenge", "Canyon", "Mesa" },
 		authors = {
 			{
 				name = "Phil42",

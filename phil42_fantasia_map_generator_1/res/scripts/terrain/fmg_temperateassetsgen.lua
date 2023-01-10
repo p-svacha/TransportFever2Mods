@@ -162,7 +162,7 @@ data.Make = function(layers, config, mkTemp, heightMap, ridgesMap, distanceMap)
 	layers:Mask(map_single_trees, map_single_trees, forestMap)
 	mkTemp:Restore(map_single_trees)
 
-	-- ##################### Forests
+	-- ##################### High Density Forests
 	local numForestLayers = (config.forestAmount * 2) + 1
 	local maxSlopeForForest = 0.6 -- how steep a slope has to be for forest to stop growing
 
@@ -173,7 +173,7 @@ data.Make = function(layers, config, mkTemp, heightMap, ridgesMap, distanceMap)
 
 	for i = 1, numForestLayers do
 		local forestAmount = math.random(minForestSize, maxForestSize) / 100
-		local forestsSize = math.random(400, 1800)
+		local forestsSize = math.random(400, 2000)
 		local treeType = anyTree
 		local forestTreeDensity = math.random(20, 90) / 100
 		local forestBlending = math.random(1, 30) / 1000
@@ -202,7 +202,7 @@ data.Make = function(layers, config, mkTemp, heightMap, ridgesMap, distanceMap)
 
 		-- reduce density on high elevations
 		local map_mask_elevation = mkTemp:Get()
-		layers:Map(heightMap, map_mask_elevation, {500, treeLineElevation}, {1, 0}, true)
+		layers:Map(heightMap, map_mask_elevation, {250, treeLineElevation}, {1, 0}, true)
 		layers:Mul(map_forests, map_mask_elevation, map_forests)
 		mkTemp:Restore(map_mask_elevation)
 
@@ -212,6 +212,35 @@ data.Make = function(layers, config, mkTemp, heightMap, ridgesMap, distanceMap)
 		layers:Mask(map_forests, map_forests, forestMap)
 		mkTemp:Restore(map_forests)
 	end
+
+	-- ##################### Lower density, higher coverage forest
+	local lowDensityForestMaxDensity = 0.1
+	local lowDensityForestCoverage = 0.37 + (0.02 * config.forestAmount)
+	local lowDensityForestBlending = 0.18
+
+	local map_low_density_forest = mkTemp:Get()
+	map_low_density_forest = getLayeredPerlinNoise(8, 1 / 1000, 2, 0.5, 0, 1)
+	layers:Map(map_low_density_forest, map_low_density_forest, {1 - lowDensityForestCoverage, (1 - lowDensityForestCoverage) + lowDensityForestBlending}, {0, lowDensityForestMaxDensity}, true)
+
+	-- mask steep cliffs
+	local map_mask_cliffs = mkTemp:Get()
+	layers:Grad(heightMap, map_mask_cliffs, 2) -- get gradients / slopes of heightmap (values go from 0 to ~5, cutoff at 1?)
+	layers:Map(map_mask_cliffs, map_mask_cliffs, {maxSlopeForForest - 0.01, maxSlopeForForest}, {1, 0}, true)
+	layers:Mul(map_low_density_forest, map_mask_cliffs, map_low_density_forest)
+	mkTemp:Restore(map_mask_cliffs)
+
+	-- reduce density on high elevations
+	local map_mask_elevation = mkTemp:Get()
+	layers:Map(heightMap, map_mask_elevation, {250, treeLineElevation}, {1, 0}, true)
+	layers:Mul(map_low_density_forest, map_mask_elevation, map_low_density_forest)
+	mkTemp:Restore(map_mask_elevation)
+
+	-- add to forest map
+	layers:WhiteNoiseNonuniform(map_low_density_forest, map_low_density_forest)
+	layers:Map(map_low_density_forest, map_low_density_forest, {0, 1}, {0, anyTree}, true)
+	layers:Mask(map_low_density_forest, map_low_density_forest, forestMap)
+	mkTemp:Restore(map_low_density_forest)
+
 
 	-- ##################### Coastal Forests
 	local maxCoastDensity = 0.7
@@ -224,9 +253,17 @@ data.Make = function(layers, config, mkTemp, heightMap, ridgesMap, distanceMap)
 
 	-- mask coasts
 	local map_distance_mask = mkTemp:Get()
+	layers:Map(distanceMap, map_distance_mask, {0, 10}, {0, 1}, true)
 	layers:Map(distanceMap, map_distance_mask, {40, 200}, {1, 0}, true)
 	layers:Mul(map_coastal_forest, map_distance_mask, map_coastal_forest)
 	mkTemp:Restore(map_distance_mask)
+
+	-- mask steep cliffs
+	local map_mask_cliffs = mkTemp:Get()
+	layers:Grad(heightMap, map_mask_cliffs, 2) -- get gradients / slopes of heightmap (values go from 0 to ~5, cutoff at 1?)
+	layers:Map(map_mask_cliffs, map_mask_cliffs, {maxSlopeForForest - 0.01, maxSlopeForForest}, {1, 0}, true)
+	layers:Mul(map_coastal_forest, map_mask_cliffs, map_coastal_forest)
+	mkTemp:Restore(map_mask_cliffs)
 
 	-- mask that some areas of the map have less
 	local map_temp_mask = getRandomMask(0.4, 0, 0.1, 3000, 6)
@@ -242,6 +279,8 @@ data.Make = function(layers, config, mkTemp, heightMap, ridgesMap, distanceMap)
 	-- ###########################################################################################################
 	-- #### ROCKS
 	-- ###########################################################################################################
+
+	local maxSlopeForRocks = 0.6
 
 	local rocksMap = mkTemp:Get()
 	layers:Constant(rocksMap, 0)
@@ -263,11 +302,74 @@ data.Make = function(layers, config, mkTemp, heightMap, ridgesMap, distanceMap)
 	layers:Mul(map_single_rocks, map_temp_mask, map_single_rocks) -- apply random mask
 	mkTemp:Restore(map_temp_mask)
 
+	-- mask steep cliffs
+	local map_mask_cliffs = mkTemp:Get()
+	layers:Grad(heightMap, map_mask_cliffs, 2) -- get gradients / slopes of heightmap (values go from 0 to ~5, cutoff at 1?)
+	layers:Map(map_mask_cliffs, map_mask_cliffs, {maxSlopeForRocks - 0.01, maxSlopeForRocks}, {1, 0}, true)
+	layers:Mul(map_single_rocks, map_mask_cliffs, map_single_rocks)
+	mkTemp:Restore(map_mask_cliffs)
+
 	-- add single rocks to rock map
 	layers:WhiteNoiseNonuniform(map_single_rocks, map_single_rocks)
 	layers:Map(map_single_rocks, map_single_rocks, {0, 1}, {0, granite}, true)
 	layers:Mask(map_single_rocks, map_single_rocks, rocksMap)
 	mkTemp:Restore(map_single_rocks)
+
+	-- ##################### Stone circles
+
+	local numStoneCircles = (config.mapSize / 5000000)
+	numStoneCircles = math.round(numStoneCircles, 1)
+
+	local minStoneCircleSize = 40
+	local maxStoneCircleSize = 120
+
+	local minStoneCircleWidth = 3
+	local maxStoneCircleWidth = 7
+
+	local minStoneCircleDensity = 0.1
+	local maxStoneCircleDensity = 0.9
+
+	debugPrint("Creating " .. numStoneCircles .. " stone circles")
+
+	for i = 1, numStoneCircles do
+		local stoneCircleSize = math.random(minStoneCircleSize, maxStoneCircleSize)
+		local stoneCircleWidth = math.random(minStoneCircleWidth, maxStoneCircleWidth)
+		local stoneCircleDensity = math.random(minStoneCircleDensity * 100, maxStoneCircleDensity * 100) / 100
+
+		local map_stone_circle = mkTemp:Get()
+		layers:Constant(map_stone_circle, stoneCircleDensity)
+
+		local stoneCircleCenterPoint = {}
+		local px = math.random(0, config.mapSizeX)
+		local py = math.random(0, config.mapSizeY)
+		stoneCircleCenterPoint[#stoneCircleCenterPoint + 1] = { px, py }
+
+		--debugPrint("Creating stone circle at " .. px .. "/" .. py)
+
+		local map_temp_mask = mkTemp:Get()
+		layers:Constant(map_temp_mask, 1)
+		layers:Points(map_temp_mask,  stoneCircleCenterPoint, 0)		
+		layers:Distance(map_temp_mask, map_temp_mask)
+
+		-- map it to make it a valid mask
+		layers:Pwlerp(map_temp_mask, map_temp_mask, {-99999, stoneCircleSize - 1, stoneCircleSize, stoneCircleSize + stoneCircleWidth, stoneCircleSize + stoneCircleWidth + 1, 99999}, {0, 0, 1, 1, 0, 0})
+		layers:Mul(map_stone_circle, map_temp_mask, map_stone_circle) -- apply mask
+		mkTemp:Restore(map_temp_mask)
+
+		-- mask steep cliffs
+		local map_mask_cliffs = mkTemp:Get()
+		layers:Grad(heightMap, map_mask_cliffs, 2) -- get gradients / slopes of heightmap (values go from 0 to ~5, cutoff at 1?)
+		layers:Map(map_mask_cliffs, map_mask_cliffs, {maxSlopeForRocks - 0.01, maxSlopeForRocks}, {1, 0}, true)
+		layers:Mul(map_stone_circle, map_mask_cliffs, map_stone_circle)
+		mkTemp:Restore(map_mask_cliffs)
+
+		-- add to rock map
+		layers:WhiteNoiseNonuniform(map_stone_circle, map_stone_circle)
+		layers:Map(map_stone_circle, map_stone_circle, {0, 1}, {0, granite}, true)
+		layers:Mask(map_stone_circle, map_stone_circle, rocksMap)
+		mkTemp:Restore(map_stone_circle)
+	end
+
 
 	-- ###########################################################################################################
 	-- #### FINALIZE

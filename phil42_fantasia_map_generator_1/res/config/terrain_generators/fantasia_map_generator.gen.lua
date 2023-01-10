@@ -63,7 +63,7 @@ return {
 		},
 		{
 			key = "flatAreasAmount",
-			name = _("Flat Areas"),
+			name = _("Flattened Areas"),
 			values = { "", "", "", "", "", "", "" },
 			defaultIndex = 3,
 			uiType = "SLIDER",
@@ -889,7 +889,7 @@ return {
 		-- ###########################################################################################################
 
 		-- ##################### Flatten some areas
-		local numFlatLayers = (flatAreasAmount * 2) + 1
+		local numFlatLayers = (flatAreasAmount * 2)
 		local highFlatAreaChance = 0.3
 		debugPrint("Creating " .. numFlatLayers .. " flat area layers")
 
@@ -944,40 +944,53 @@ return {
 		end
 
 		-- ##################### Stalagmites
-		local singleStalagmiteHeight = 300
-		local stalagmiteSize = 15
-		local stalagmiteBlend = 70
+		local numStalagmites = (mapSize / 6000000)
+		numStalagmites = math.round(numStalagmites, 1)
 
-		local map_single_stalagmite = mkTemp:Get()
-		map_single_stalagmite = getLayeredPerlinNoise(6, 1 / 100, 2, 0.5, 100, 200)
+		local minStalagmiteSize = 10
+		local maxStalagmiteSize = 20
 
-		local stalagmitePoints = {}
-		local px = math.random(0, params.mapSizeX)
-		local py = math.random(0, params.mapSizeY)
-		stalagmitePoints[#stalagmitePoints + 1] = { px, py }
+		local minStalagmiteHeight = 100
+		local maxStalagmiteHeight = 200
 
-		local map_temp_mask = mkTemp:Get()
-		result.layers:Constant(map_temp_mask, 1)
-		result.layers:Points(map_temp_mask,  stalagmitePoints, 0)		
-		result.layers:Distance(map_temp_mask, map_temp_mask)
+		debugPrint("Creating " .. numStalagmites .. " stalagmites")
 
-		-- small detail
-		local map_temp_detail = mkTemp:Get()
-		addLayeredPerlinNoise(map_temp_detail, 5, 1 / 50, 2, 0.5, -80, 0)
-		result.layers:Add(map_temp_detail, map_temp_mask, map_temp_mask)
-		mkTemp:Restore(map_temp_detail)
-		
-		-- map it to make it a valid mask
-		result.layers:Pwlerp(map_temp_mask, map_temp_mask, {-99999, -101, -100, stalagmiteSize, stalagmiteSize + stalagmiteBlend, 99999}, {0, 0, 1, 1, 0, 0})
+		for i = 1, numStalagmites do
+			local singleStalagmiteHeight = math.random(minStalagmiteHeight, maxStalagmiteHeight)
+			local stalagmiteSize = math.random(minStalagmiteSize, maxStalagmiteSize)
+			local stalagmiteBlend = 70
 
-		-- add it to heightmap
-		result.layers:Mul(map_single_stalagmite, map_temp_mask, map_single_stalagmite) -- apply mask
-		mkTemp:Restore(map_temp_mask)
+			local map_single_stalagmite = mkTemp:Get()
+			map_single_stalagmite = getLayeredPerlinNoise(6, 1 / 100, 2, 0.5, singleStalagmiteHeight - 50, singleStalagmiteHeight + 50)
 
-		--result.layers:Copy(map_single_stalagmite, result.heightmapLayer) -- test
-		result.layers:Add(map_single_stalagmite, result.heightmapLayer, result.heightmapLayer) -- add to final heightmap
+			local stalagmitePoints = {}
+			local px = math.random(0, params.mapSizeX)
+			local py = math.random(0, params.mapSizeY)
+			stalagmitePoints[#stalagmitePoints + 1] = { px, py }
 
-		mkTemp:Restore(map_single_stalagmite)
+			local map_temp_mask = mkTemp:Get()
+			result.layers:Constant(map_temp_mask, 1)
+			result.layers:Points(map_temp_mask,  stalagmitePoints, 0)		
+			result.layers:Distance(map_temp_mask, map_temp_mask)
+
+			-- small detail
+			local map_temp_detail = mkTemp:Get()
+			addLayeredPerlinNoise(map_temp_detail, 5, 1 / 50, 2, 0.5, -50, 0)
+			result.layers:Add(map_temp_detail, map_temp_mask, map_temp_mask)
+			mkTemp:Restore(map_temp_detail)
+			
+			-- map it to make it a valid mask
+			result.layers:Pwlerp(map_temp_mask, map_temp_mask, {-99999, -101, -100, stalagmiteSize, stalagmiteSize + stalagmiteBlend, 99999}, {0, 0, 1, 1, 0, 0})
+
+			 -- apply mask
+			result.layers:Mul(map_single_stalagmite, map_temp_mask, map_single_stalagmite)
+			mkTemp:Restore(map_temp_mask)
+
+			--result.layers:Copy(map_single_stalagmite, result.heightmapLayer) -- test
+			result.layers:Add(map_single_stalagmite, result.heightmapLayer, result.heightmapLayer) -- add to final heightmap
+
+			mkTemp:Restore(map_single_stalagmite)
+		end
 
 		-- ###########################################################################################################
 		-- #### Step 4 - Assets
@@ -987,6 +1000,9 @@ return {
 
 		local assetsConfig =  {
 			forestAmount = forestAmount,
+			mapSizeX = params.mapSizeX,
+			mapSizeY = params.mapSizeY,
+			mapSize = mapSize
 		}
 		
 		result.forestMap, result.treesMapping, result.assetsMap, result.assetsMapping = temperateassetsgen.Make(
