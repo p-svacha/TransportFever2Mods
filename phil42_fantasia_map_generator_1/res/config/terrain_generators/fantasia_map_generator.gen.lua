@@ -625,7 +625,7 @@ return {
 		mkTemp:Restore(hm_heightDetailMask)
 		mkTemp:Restore(hm_highVariationNoise)
 
-		local map_temp_mask = getRandomMask(0.3, 0, 0.05, math.random(4000, 8000), 3)
+		local map_temp_mask = getRandomMask(0.3, 0, 0.1, math.random(4000, 8000), 3)
 		result.layers:Herp(map_temp_mask, map_temp_mask, {0, 1}) -- convert linear to smooth interpolation
 		result.layers:Mul(hm_final, map_temp_mask, hm_final) -- apply random mask
 		mkTemp:Restore(map_temp_mask)
@@ -890,7 +890,7 @@ return {
 
 		-- ##################### Flatten some areas
 		local numFlatLayers = (flatAreasAmount * 2)
-		local highFlatAreaChance = 0.3
+		local highFlatAreaChance = 0.33
 		debugPrint("Creating " .. numFlatLayers .. " flat area layers")
 
 		for i = 1, numFlatLayers do

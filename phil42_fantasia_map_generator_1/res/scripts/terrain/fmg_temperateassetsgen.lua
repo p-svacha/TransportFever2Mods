@@ -175,15 +175,16 @@ data.Make = function(layers, config, mkTemp, heightMap, ridgesMap, distanceMap)
 		local forestAmount = math.random(minForestSize, maxForestSize) / 100
 		local forestsSize = math.random(400, 2000)
 		local treeType = anyTree
-		local forestTreeDensity = math.random(20, 90) / 100
+		local forestTreeDensity = math.random(30, 55) / 100
 		local forestBlending = math.random(1, 30) / 1000
 
-		local treeTypeRng = math.random(1, 4)
-		if treeTypeRng == 1 then
+		local treeTypeRng = math.random(0, 3)
+		if treeTypeRng <= 1 then
 			treeType = conifer
-		elseif treeTypeRng == 2 then
+			forestTreeDensity = forestTreeDensity * 0.65
+		elseif treeTypeRng <= 2 then
 			treeType = forest
-		elseif treeTypeRng == 3 then
+		elseif treeTypeRng <= 3 then
 			treeType = anyTree
 		end
 
@@ -326,8 +327,8 @@ data.Make = function(layers, config, mkTemp, heightMap, ridgesMap, distanceMap)
 	local minStoneCircleWidth = 3
 	local maxStoneCircleWidth = 7
 
-	local minStoneCircleDensity = 0.1
-	local maxStoneCircleDensity = 0.9
+	local minStoneCircleDensity = 0.04
+	local maxStoneCircleDensity = 0.4
 
 	debugPrint("Creating " .. numStoneCircles .. " stone circles")
 

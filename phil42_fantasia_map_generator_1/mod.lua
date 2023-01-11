@@ -1,7 +1,7 @@
 function data()
 return {
 	info = {
-		minorVersion = 0,
+		minorVersion = 1,
 		severityAdd = "NONE",
 		severityRemove = "NONE",
 		name = _("Fantasia Map Generator"),
