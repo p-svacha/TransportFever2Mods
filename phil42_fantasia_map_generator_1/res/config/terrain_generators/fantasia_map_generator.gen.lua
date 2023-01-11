@@ -284,9 +284,8 @@ return {
 		for pts = 1, numLakes do
 			local map_lakes_mask = mkTemp:Get()
 			result.layers:Constant(map_lakes_mask, 1)
-
 			
-			local lakeCoverage = 0.3 + (coastalLakesSize * 0.04) + ((mapSize / 9000000) * 0.015)
+			local lakeCoverage = 0.3 + (coastalLakesSize * 0.04)
 			local lakeIslandAmount = 0.35
 
 			local lakeOriginPoints = {}
@@ -312,7 +311,7 @@ return {
 			end
 
 		-- ##################### River Preparation	
-		local numRivers = 0.15 + (mapSize * riversAmount / 12000000)
+		local numRivers = 0.45 + (mapSize * riversAmount / 16000000)
 		numRivers = math.round(numRivers, 1)
 		debugPrint("Creating " .. numRivers .. " Rivers")
 
@@ -338,7 +337,7 @@ return {
 		local minNumSegments = 15
 		local maxNumSegments = 35 + additionalSegmentsFromMapSize
 
-		local additionalWidthFromMapSize = (mapSize / 9000000) * 200
+		local additionalWidthFromMapSize = (mapSize / 9000000) * 120
 		additionalSegmentsFromMapSize = math.clamp(0, 1000)
 		additionalSegmentsFromMapSize = math.round(additionalSegmentsFromMapSize, 1)
 		local minStartWidth = 120
@@ -377,8 +376,8 @@ return {
 		mkTemp:Restore(map_rivers_mask)
 
 		-- ##################### River End Lakes
-		local minLakeSize = (150 + ((mapSize / 9000000) * 450)) * (1 + ((coastalLakesSize - 2) * 0.1))
-		local maxLakeSize = (300 + ((mapSize / 9000000) * 800)) * (1 + ((coastalLakesSize - 2) * 0.1))
+		local minLakeSize = (300 + ((mapSize / 9000000) * 100)) * (1 + ((coastalLakesSize - 2) * 0.1))
+		local maxLakeSize = (400 + ((mapSize / 9000000) * 200)) * (1 + ((coastalLakesSize - 2) * 0.1))
 
 		for i = 1, numRivers do
 			local lake_size = math.random(minLakeSize, maxLakeSize)
