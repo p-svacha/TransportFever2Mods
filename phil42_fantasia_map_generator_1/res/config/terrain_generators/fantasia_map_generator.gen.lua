@@ -49,6 +49,13 @@ return {
 		},
 		{
 			key = "canyons",
+			name = _("Canyons"),
+			values = { "", "", "", "", "", "", "" },
+			defaultIndex = 3,
+			uiType = "SLIDER",
+		},
+				{
+			key = "coastalCliffsAmount",
 			name = _("Coastal Cliffs"),
 			values = { "", "", "", "", "", "", "" },
 			defaultIndex = 3,
@@ -95,7 +102,8 @@ return {
 		local mountainRidgesAmount = params.mountainRidgesAmount
 		local mountainRidgesPeakHeight = params.mountainRidgesPeakHeight
 		local riversAmount = params.riversAmount
-		local canyon = params.canyons / 6 + 0.2
+		local canyon = params.canyons / 7 + 0.15
+		local coastalCliffsAmount = params.coastalCliffsAmount
 		local plateausAmount = params.plateausAmount
 		local flatAreasAmount = params.flatAreasAmount
 		local forestAmount = params.forestAmount
@@ -432,20 +440,44 @@ return {
 		result.layers:Map(map_water_mask, map_land_mask, {1, 0}, {0, 1}, true)
 		result.layers:Distance(map_land_mask, map_land_mask)
 
+		-- make some parts really steep to create coastal cliffs
+		local coastalCliffSteepness = 5.5
+		local coastalCliffCoverage = 0.21 + (0.03 * coastalCliffsAmount)
+		local coastalCliffBlending = 0.2
+
+		debugPrint("Coastal Cliff coverage = " .. coastalCliffCoverage)
+
+		local map_cliff = mkTemp:Get()
+		result.layers:Map(map_land_mask, map_cliff, {0, 1}, {0, coastalCliffSteepness}, false)
+
+		-- add detail to cliffs
+		local map_cliff_detail = mkTemp:Get()
+		map_cliff_detail = getLayeredPerlinNoise(6, 1 / 60, 2, 0.5, 0.75, 1.25)
+		result.layers:Mul(map_cliff, map_cliff_detail, map_cliff)
+		mkTemp:Restore(map_cliff_detail)
+
+		-- mask cliffs so they don't appear everywhere
+		local map_cliff_mask = getRandomMask(coastalCliffCoverage, 0, coastalCliffBlending, 6000, 4)
+		result.layers:Herp(map_cliff_mask, map_cliff_mask, {0, 1}) -- convert linear to smooth interpolation
+		result.layers:Mul(map_cliff, map_cliff_mask, map_cliff) -- apply random mask
+
+		result.layers:Add(map_land_mask, map_cliff, map_land_mask)
+		mkTemp:Restore(map_cliff)
+
 		-- add some detail that creates coastal planes in some areas of the map
 		local map_land_mask_detail_big = getLayeredPerlinNoise(5, 1 / 800, 2, 0.5, -maxCoastalPlaneWidth, maxCoastalPlaneWidth / 4) -- broad detail that creates coastal planes in some areas of the map
+
+		-- mask it with the inverted cliff mask so cliffs and coastal planes can't appear at the same spot
+		result.layers:Map(map_cliff_mask, map_cliff_mask, {0, 1}, {1, 0}, true)
+		result.layers:Mul(map_land_mask_detail_big, map_cliff_mask, map_land_mask_detail_big)
+		mkTemp:Restore(map_cliff_mask)
+
 		result.layers:Add(map_land_mask_detail_big, map_land_mask, map_land_mask)
 		mkTemp:Restore(map_land_mask_detail_big)
-
+		
 		-- convert into valid mask
 		result.layers:Map(map_land_mask, map_land_mask, {0, landMaskGradientWidth}, {0, 1}, true)
 		result.layers:Herp(map_land_mask, map_land_mask, {0, 1}) -- convert linear interpolation to smooth
-
-		-- JUST TO TEST the land mask
-		--result.layers:Map(map_land_mask, map_land_mask, {0, 1}, {0, 100}, true)
-		--result.layers:Add(map_land_mask, result.heightmapLayer, result.heightmapLayer) 
-		--result.layers:Map(map_land_mask, map_land_mask, {0, 1}, {0, 1}, true)
-
 
 		-- ##################### Water
 		local map_water = mkTemp:Get()
@@ -475,8 +507,10 @@ return {
 		-- #### High Elevation Areas
 		-- ###########################################################################################################
 
-		-- ##################### Canyons / Coastal Cliffs
+		-- ##################### Canyons
 		local canyonMap = mkTemp:Get()
+
+		debugPrint("Canyon amount = " .. canyon)
 
 		local canyonWidth = 0.9 -- how much space there is in between the cliffs
 		local canyonHeight = 0.22 -- how high the cliffs are

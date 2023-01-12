@@ -22,8 +22,8 @@ The amount and height of mountains is configurable.
 Some mesas will be scattered across the map, meaning there can also be steep cliffs on lower parts of the map. These mesas will usually be reachable and traversable from some directions.
 
 [b]Coastal Features[/b]
-Coasts can greatly vary in this generator. They can be surrounded by canyons similar to the dry climate. They can be next to big mountain ranges creating huge cliffs or they can be very flat. A map will usually have all of these features somewhere on the map.
-The amount of canyons is configurable.
+How the coastline looks will greatly vary on different parts of the map. They can appear as canyons similar to the ones in the dry climate. There can be very flat coastal planes allowing for easy water access. But there can also be huge cliffs and river valleys meandering through the map.
+The amount of canyons and cliffs is configurable.
 
 [b]Elevation Variety[/b]
 The elevation variety is generally bigger than in the default generator. High elevation areas will not be limited to cliffs on mountain ranges. There will also be plateaus and flat areas on higher elevations giving the possibility to spawn towns and industries high up.
