@@ -19,7 +19,11 @@ Mods to make:
 
 Terrain Generator:
 -------------------
-DONE :)
+tree filter
+sandy beaches
+different cliff textures
+different ground textures
+
 
 
 Dynamic Towns:
