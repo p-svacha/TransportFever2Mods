@@ -1,5 +1,5 @@
 # Fantasia Map Generator
-This mods adds a new map generator to the temperate climate. The Fantasia Map Generator is built up from the ground with the goal to generate unique, interesting, varied and challenging maps allowing (and requiring) usage of street, rail, water and air vehicles. The generator attempts to combine a lot of different features into one map, so you no longer have to choose between alpine rivers, dry mesas and tropical islands, because this generator has it all (mostly). Different parts of the map will looks and play different and have their own identity and recognizability. A lot is also configurable so you can tune the map generation to your own preferences.
+This mods adds a new map generator to all environments (temperate / dry / tropical). The Fantasia Map Generator is built up from the ground with the goal to generate unique, interesting, varied and challenging maps allowing (and requiring) usage of street, rail, water and air vehicles. The generator attempts to combine a lot of different features into one map, so you no longer have to choose between alpine rivers, dry mesas and tropical islands, because this generator has it all (mostly). Different parts of the map will looks and play different and have their own identity and recognizability. A lot is also configurable so you can tune the map generation to your own preferences.
 By including this many features into one generator the outcomes can sometimes be unpredictable, unrealistic or extremely hard. This is by design since the generator is mostly aimed at people looking for new challenges or some variety from the default map generators, which are absolutely great by themselves.
 
 # Features
@@ -11,7 +11,7 @@ The amount and size of lakes is configurable.
 
 **Rivers**
 Rivers work very differently from the default generator. They can start and end within the map instead of just going straight through it. They can also vary in length, width, curvature and feed into each other. Rivers also just don't end by disappearing but will end in an estuary. When multiple rivers are generated it is possible that they cross over each other. This is of course not very realistic but combined with the lakes, it creates interesting new ways for ship gameplay.
-The amount of rivers is configurable.
+The amount of rivers and their width is configurable.
 
 **Mountains**
 Mountains are generated in different layers. Single high peaks, average height mountains and mountain ranges. Through the combination of these layers new mountain shapes and sometimes massive peaks can appear. Generally mountains will be more varied in size and shape than in the default generator.

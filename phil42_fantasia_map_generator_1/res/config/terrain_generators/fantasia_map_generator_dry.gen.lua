@@ -1,5 +1,5 @@
 local mapgenutil = require "terrain/fmg_mapgenutil"
-local temperateassetsgen = require "terrain/fmg_temperateassetsgen"
+local temperateassetsgen = require "terrain/fmg_dryassetsgen"
 local layersutil = require "terrain/layersutil"
 local desertlayers = require "terrain/desertlayers"
 local maputil = require "maputil"
@@ -8,7 +8,7 @@ local vec2 = require "vec2"
 function data() 
 
 return {
-	climate = "temperate.clima.lua",
+	climate = "dry.clima.lua",
 	order = 0,
 	name = _("Fantasia Map Generator"),
 	params = {
@@ -828,7 +828,7 @@ return {
 
 		-- add some irregularities to the mask
 		local map_mesa_cliff_detail = mkTemp:Get()
-		map_mesa_cliff_detail = getLayeredPerlinNoise(2, 1 / 40, 2, 0.7, 1, 1.5)
+		map_mesa_cliff_detail = getLayeredPerlinNoise(6, 1 / 160, 2, 0.7, 1, 1.5)
 		result.layers:Mul(map_mesa_mask, map_mesa_cliff_detail, map_mesa_mask)
 		result.layers:Map(map_mesa_mask, map_mesa_mask, {0, 1}, {0, 1}, true) -- clamp to {0,1} so only the edges of the mask get affected
 		
@@ -840,6 +840,7 @@ return {
 		result.layers:Add(map_mesa, result.heightmapLayer, result.heightmapLayer) -- add to final heightmap
 
 		mkTemp:Restore(map_mesa)
+
 		-- ##################### Soft dunes covering the whole land
 		local softDunesStrength = 15
 
