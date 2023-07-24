@@ -9,7 +9,7 @@ function data()
 
 return {
 	climate = "temperate.clima.lua",
-	order = 10,
+	order = 0,
 	name = _("Fantasia Map Generator"),
 	params = {
 		{
@@ -84,11 +84,14 @@ return {
 		},
 	},
 	updateFn = function(params)
+		-- local temperateassetsgen = dofile("./res/scripts/terrain/temperateassetsgen.lua")
+		-- local mapgenutil = dofile("./res/scripts/terrain/mapgenutil.lua")
+		-- local layersutil = dofile("./res/scripts/terrain/layersutil.lua")
 		local result = {
 			parallelFactor = 32,
 			heightmapLayer = "HM",
 			layers = layersutil.Layer.new(),
-		}
+		}	
 
 		-- ###########################################################################################################
 		-- #### PARAMS

@@ -3,14 +3,6 @@ This mods adds a new map generator to the temperate climate. The Fantasia Map Ge
 
 By including this many features into one generator the outcomes can sometimes be unpredictable, unrealistic or extremely hard. This is by design since the generator is mostly aimed at people looking for new challenges or some variety from the default map generators, which are absolutely great by themselves.
 
-[h1]How to Use[/h1]
-To use this generator you simply have to subscribe to this mod. It will then be available in the map generation screen. You do not have to enable it in the mod settings. 
-
-I can highly recommend combining this mod with the temperate climate retexture ("Snow Tops") feature of [url=https://steamcommunity.com/sharedfiles/filedetails/?id=2832202381&searchtext=not+so+temperate]Not So Temperate Generator[/url] (can be turned on and off in the mod settings of that mod).
-This mod also goes well with [url=https://steamcommunity.com/id/Phil_42/myworkshopfiles/?appid=1066780]my other mods[/url].
-
-This mod should have no compatibility issues with any other mods.
-
 [h1]Features[/h1]
 The generator works by creating different layers and combine them into one. This can lead to some layers being more or less prevalent at random. It is therefore recommened to try out different seeds since the result can vary a lot. Below is a summary of the main features.
 
@@ -48,8 +40,11 @@ The amount of forests is configurable.
 [b]Landmarks[/b]
 This generator has relatively few restrictions on what it exactly can generate. This means you'll find weird, unique and interesting shapes within the terrain. It was a goal to leave these in since I think it's pretty cool to have actual geological landmarks in a map. It of course also has the downside that some parts might look a bit too weird sometimes. But hey, there is always the in-game terraforming tool.
 
+[h1]How to Use[/h1]
+To use this generator you simply have to subscribe to this mod. It will then be available in the map generation screen. You do not have to enable it in the mod settings. This mod also goes well with [url=https://steamcommunity.com/id/Phil_42/myworkshopfiles/?appid=1066780]my other mods[/url]. This mod should have no compatibility issues with any other mods.
+
 [h1]Credits[/h1]
-The vast majority of the code for this generator is written by myself. I've also reused parts of the code of the default terrain generators that come from the game. I have also used some code snippets from [url=https://steamcommunity.com/sharedfiles/filedetails/?id=2016383483&searchtext=terrain]Terrain Fever by Haviland[/url] and [url=https://steamcommunity.com/sharedfiles/filedetails/?id=2832202381&searchtext=not+so+temperate]Not So Temperate Generator by Pentasis[/url]. Those are both extremely well made temperate terrain generators and I can really recommend checking them out if you are looking for more variety in your maps.
+The most part of the code is written by myself. I've also reused parts of the code of the default terrain generators that come from the game. I have also used some code snippets from [url=https://steamcommunity.com/sharedfiles/filedetails/?id=2016383483&searchtext=terrain]Terrain Fever by Haviland[/url] and [url=https://steamcommunity.com/sharedfiles/filedetails/?id=2832202381&searchtext=not+so+temperate]Not So Temperate Generator by Pentasis[/url]. Those are both extremely well made temperate terrain generators and I can really recommend checking them out if you are looking for more variety in your maps.
 
 All the code for this and all my other mods is also available open-source [url=https://github.com/p-svacha/TransportFever2Mods]on GitHub[/url].
 
