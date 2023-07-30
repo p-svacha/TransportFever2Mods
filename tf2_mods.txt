@@ -1,4 +1,4 @@
-Notes for terrain generation
+USEFUL COMMANDS FOR TERRAIN GEN:
 ----------------
 result.layers:Distance: Apply this to a mask. Every point will receive the distance from the edge of the mask as its value.
 result.layers.Map: Map the values of a map from a range to another range. If the last param is true, the values that were outside from the initial range are set to the limits of the new range 
@@ -8,27 +8,51 @@ Grad: (last param = 2): Returns the first derivative of a map, meaning the steep
 Laplace: Returns the second derivative of a map, meaning highlighting the edges (not that useful)
 Percolation: Flood fills a white noise map
 
+MAP SIZES:
+------------------------------
+For TerrainGen:
 bounds go from - realSize / 2 to realSize / 2 (used by rivers)
 mapSize is realSize / 4 (used by noise)
-
 area: 12km x 12km
 mapSize: [0 - 3000] (used by noise)
 bounds: [-6000 - 6000] (used by river generation)
 
-Mods to make:
+At Runtime:
+area: 4km x 4km => 
+api.engine.getComponent(api.engine.util.getWorld(),
+api.type.ComponentType.TERRAIN).size = 16 / 16 => 
+units [-2000 - 2000]
 
-Terrain Generator:
+MODELS:
+------------------------------------------
+Vehicle models: D:\Steam\steamapps\common\Transport Fever 2\res\textures\models\vehicle
+
+Mission allow vehicles:
+
+local vehiclestore = require "mission.vehiclestore"
+vehiclestore.setAllowedVehicleCount("vehicle/plane/bleriot_xi.mdl", 1)
+
+MOUSE:
 -------------------
-tree filter
-sandy beaches
-different cliff textures
-different ground textures
+api.gui.util.getMouseScreenPos() or game.gui.getMousePos() - 
+returns 2D screen coordinates for the user's "cursor", like "{ 987, 700, }"
+
+api.gui.util.getGameUI():getTerrainPos() or game.gui.getTerrainPos() - 
+returns the 3D world coordinates corresponding to the user's screen cursor, like "{ -3731.9204101563, 5461.7333984375, 19.83162689209, }"
+
+MOD IDEAS:
+------------------------------
+Hamlets:
+	- try building monuments with game.interface.buildConstruction(fileName, param, transf)
+
+Geoguessr mod:
+- change structure cameras to use "cameraController:follow(-1, false)" and "setCameraPosition" instead of follow
+- rework toggle icon to open/close window
+- prepare workshop stuff (thumbnail, tags, in-game thumbnail, description, in-game description, screenshots)
+cameras to add:
+town as a whole
 
 
+Snowball's Distance meter - update to work with new version
 
-Dynamic Towns:
-----------------
-Spawn new Towns  (chance based on town density and amount of towns) https://transportfever2.com/wiki/api/modules/api.cmd.html  make.createTowns(towns)
-Towns in danger of disappearing (warning that a town can disappear at any moment)
-	- when no supplies
-Chance that towns in danger suddenlly disappear (make.removeTown(townEntity))
+Combined Climate: New climate that uses all textures and assets
