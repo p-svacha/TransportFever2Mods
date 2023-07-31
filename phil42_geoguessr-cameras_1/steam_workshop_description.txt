@@ -1,2 +1,37 @@
-[h1]Dynamic Town Spawns[/h1]
-This mods adds the feature of new towns being created during the game. Similar to the way that new industries can spawn during a playthrough, the same thing can now happen with towns!
+See your world from new perspectives.
+
+[h1]Geoguessr Cameras[/h1]
+This mods adds new camera tools to the game. Inspired by the likes of Geoguessr or randomstreetview.com, these new camera tools will bring you to a random point on the map of some sorts. There are many different modes implemented, for example you can follow a random person, or jump to a random industry, or jump to a fully random position anywhere on the map. And that is all this mod does, it provides tools to move the camera. Nothing more, nothing less.
+
+[h1]Features / Modes[/h1]
+There are a total of 15 different camera modes implemented, organized into 5 categores:
+
+[b]Street View[/b]
+Your classic Geoguessr experience. Chosing a mode in this category will instantly move the camera to a any random street or rail track on your map and show it from a street view / first-person perspective. Due to camera limitations tunnels are excluded from this.
+The available modes in this category are "Any Path", "Streets" and "Rail Tracks".
+
+[b]Vehicles[/b]
+Camera modes in this category will instantly move the camera to follow a random transport vehicle on the map. Note that private cars are not considered transport vehicles.
+The available modes in this category are "Any vehicle", "Train", "Road Vehicle", "Ship" and "Plane".
+
+[b]Creatures[/b]
+With modes in this category you can follow a random living thing.
+The available modes in this category are "Person" and "Animal".
+Note that for people, only those are considered that are currently travelling. This includes people walking, waiting at stations and driving with private cars.
+
+[b]Structures[/b]
+Camera modes in this category will instantly move the camera to show a random structure/building of the chosen type.
+The available modes in this category are "Town Building", "Industry" and "Station".
+
+[b]Misc[/b]
+This category contains two special camera modes.
+The first one "Any Position" will instantly move the camera to show any random position on the map. This can be the center of a city, but will more likely be some random landscape or lake somewhere.
+The second one "Anything" will randomly choose any of the other available options.
+
+[h1]How to Use[/h1]
+If you enable the mod you will see a new icon with a camera appear next to the "Bulldoze" icon. Clicking it will toggle a window with all the functions. Clicking on a button in that window will do the magic.
+
+[h1]Why?[/h1]
+I made this mod mostly for myself. I love just watching my worlds, and with these modes watching gets even more fun since you'll get to see it from many new perspectives you might have missed otherwise.
+Or you can test how well you know your map. Do you recognize all the places the camera jumps to?
+It's just a fun little tool and since I made it anyway, I might as well share it here. If you have any ideas for additional features just let me know in the comments, I always read them. :)

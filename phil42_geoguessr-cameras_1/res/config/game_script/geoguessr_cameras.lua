@@ -3,20 +3,34 @@ local vec3 = require("vec3")
 
 local guiState = {}
 
-function createButton(text, tooltipText) 
-	local textView = api.gui.comp.TextView.new(_(text))
-	local maxSize = 24
-	local button = api.gui.comp.Button.new(textView,false)
+function createButton(text, tooltipText, iconPath) 
+
+	local buttonLayout = api.gui.layout.BoxLayout.new("HORIZONTAL")
+
+	local textView = api.gui.comp.TextView.new(_(text))	
+	local imageView = api.gui.comp.ImageView.new(iconPath)
+	imageView:setMaximumSize(api.gui.util.Size.new(24, 24))
+
+	buttonLayout:addItem(imageView)
+	buttonLayout:addItem(textView)
+
+	local buttonComp = api.gui.comp.Component.new(" ")
+	buttonComp:setLayout(buttonLayout)
+	local button = api.gui.comp.Button.new(buttonComp,false)
+
 	if tooltipText then
 		button:setTooltip(_(tooltipText))
 	end
+
 	return button
 end
 
 -- ######################################## CAMERA FUNCTIONS ##############################
 
-local function setCameraPosition(cameraController, center, dist, angle, pitch)
-	cameraController.setCameraData(cameraController, center, dist, angle, pitch)
+local function setCameraPosition(center, dist, angle, pitch)
+	local cameraController = api.gui.util.getGameUI():getMainRendererComponent():getCameraController() -- get camera controller
+	cameraController:follow(-1, false) -- unfollow currently followed object
+	cameraController:setCameraData(center, dist, angle, pitch) -- set new position
 	debugPrint("camera position set to " .. center.x .. "/" .. center.y .. ", distance: " .. dist .. ", angle: " .. angle .. ", pitch: " .. pitch)
 end
 
@@ -46,28 +60,19 @@ end
 
 -- moves the camera to a fully random position
 local function setRandomPosition()
-	-- get camera controller
-	local cameraController = api.gui.util.getGameUI():getMainRendererComponent():getCameraController()
-	cameraController:follow(-1, false) -- unfollow
-
-	-- move camera
 	local center = getRandomPoisition()
 	local dist = math.random(20, 300)
 	local angle = math.random(0, 314) / 100
 	local pitch = math.random(-50, 100) / 100
-	setCameraPosition(cameraController, center, dist, angle, pitch)
+	setCameraPosition(center, dist, angle, pitch)
 end
 
-local function randomizeAnglesForFollowCam(distance, minPitch)
-	-- get camera controller
-	local cameraController = api.gui.util.getGameUI():getMainRendererComponent():getCameraController()
-
-	-- move camera
+local function randomizeAnglesForFollowCam()
 	local center = api.type.Vec2f.new(0,0)
-	local dist = distance
+	local dist = 20
 	local angle = math.random(0, 314) / 100
-	local pitch = math.random(minPitch, 100) / 100
-	setCameraPosition(cameraController, center, dist, angle, pitch)
+	local pitch = math.random(-50, 50) / 100
+	setCameraPosition(center, dist, angle, pitch)
 end
 
 local function setRandomEdgeView(type)
@@ -77,7 +82,6 @@ local function setRandomEdgeView(type)
 
 	-- get camera controller
 	local cameraController = api.gui.util.getGameUI():getMainRendererComponent():getCameraController()
-	cameraController:follow(-1, false) -- unfollow
 
 	-- get a random street
 	local edgeIdList = (game.interface.getEntities({ radius = 1e100 }, { type = "BASE_EDGE" })) -- get all edges
@@ -126,7 +130,7 @@ local function setRandomEdgeView(type)
 	local dist = 15
 	local angle = vec3.xyAngle(vec3.new(tangent.x, tangent.y, tangent.z)) + angleOffset
 	local pitch = -0.35
-	setCameraPosition(cameraController, center, dist, angle, pitch)
+	setCameraPosition(center, dist, angle, pitch)
 
 	if baseEdgeComponent.type == 1 then -- special case for bridges
 		cameraController:follow(randomEdgeId, false)
@@ -149,7 +153,7 @@ local function followRandomVehicle()
 	end
 
 	local randomVehicleId = vehicleIdList[math.random(#vehicleIdList)]
-	randomizeAnglesForFollowCam(20, -50)
+	randomizeAnglesForFollowCam()
 	cameraController:follow(randomVehicleId, false)
 
 	debugPrint("Following vehicle with id " .. randomVehicleId)
@@ -179,13 +183,13 @@ local function followRandomVehicleOfType(type)
 		randomVehicleId = vehicleIdList[math.random(#vehicleIdList)]
 		typeComponent = api.engine.getComponent(randomVehicleId, type)
 		counter = counter + 1
-		if counter >= 1000 then
+		if counter >= 1500 then
 			debugPrint("abort followRandomVehicleOfType() because no vehicles match specified type")
 			return
 		end
 	end
 
-	randomizeAnglesForFollowCam(20, -50)
+	randomizeAnglesForFollowCam()
 	cameraController:follow(randomVehicleId, false)
 
 	debugPrint("Following vehicle with id " .. randomVehicleId)
@@ -207,7 +211,7 @@ local function followRandomPerson()
 	end
 
 	local randomPersonId = personIdList[math.random(#personIdList)]
-	randomizeAnglesForFollowCam(20, -50)
+	randomizeAnglesForFollowCam()
 	cameraController:follow(randomPersonId, false)
 
 	debugPrint("Following person with id " .. randomPersonId)
@@ -229,13 +233,13 @@ local function followRandomAnimal()
 	end
 
 	local randomAnimalId = animalIdList[math.random(#animalIdList)]
-	randomizeAnglesForFollowCam(20, -50)
+	randomizeAnglesForFollowCam()
 	cameraController:follow(randomAnimalId, false)
 
 	debugPrint("Following animal with id " .. randomAnimalId)
 end
 
-local function focusRandomTownBuilding()
+local function focusRandomBuilding(type, minDist, maxDist)
 		-- init randomness
 		math.randomseed(os.time())
 
@@ -243,70 +247,77 @@ local function focusRandomTownBuilding()
 		local cameraController = api.gui.util.getGameUI():getMainRendererComponent():getCameraController()
 	
 		-- get a random entity of specified type
-		local buildingIdList = (game.interface.getEntities({ radius = 1e100 }, { type = "TOWN_BUILDING" }))
+		local buildingIdList = (game.interface.getEntities({ radius = 1e100 }, { type = "CONSTRUCTION" }))
 	
 		if next(buildingIdList) == nil then
-			debugPrint("abort focusRandomTownBuilding() because no town building found")
+			debugPrint("abort focusRandomBuilding() because no building found")
 			return 
 		end
 	
 		local randomBuildingId = buildingIdList[math.random(#buildingIdList)]
-		randomizeAnglesForFollowCam(20, -50)
-		cameraController:follow(randomBuildingId, false)
+		local buildingEntity = game.interface.getEntity(randomBuildingId)
+		local isCorrectType = false
+		local counter = 0
+		while(not isCorrectType)
+		do
+			randomBuildingId = buildingIdList[math.random(#buildingIdList)]
+			buildingEntity = game.interface.getEntity(randomBuildingId)
+			if (buildingEntity and buildingEntity.fileName and (string.sub(buildingEntity.fileName, 1, string.len(type)) == type)) then
+				isCorrectType = true
+			end
+			counter = counter + 1
+			if counter >= 2000 then
+				debugPrint("abort focusRandomBuilding() because no candidate found that matches type")
+				return
+			end
+		end
+		
+		--local constructionComponent = api.engine.getComponent(randomBuildingId, api.type.ComponentType.CONSTRUCTION)
+
+		local center = api.type.Vec2f.new(buildingEntity.position[1], buildingEntity.position[2])
+		local dist = math.random(minDist, maxDist)
+		local angle = math.random(0, 314) / 100
+		local pitch = math.random(-50, 75) / 100
+		setCameraPosition(center, dist, angle, pitch)
 	
-		debugPrint("Focussing town building with id " .. randomBuildingId)
-end
-
-local function focusRandomIndustry()
-	-- init randomness
-	math.randomseed(os.time())
-
-	-- get camera controller
-	local cameraController = api.gui.util.getGameUI():getMainRendererComponent():getCameraController()
-
-	-- get a random entity of specified type
-	local buildingIdList = (game.interface.getEntities({ radius = 1e100 }, { type = "SIM_BUILDING" }))
-
-	if next(buildingIdList) == nil then
-		debugPrint("abort focusRandomIndustry() because no industry found")
-		return 
-	end
-
-	local randomBuildingId = buildingIdList[math.random(#buildingIdList)]
-	randomizeAnglesForFollowCam(80, 0)
-	cameraController:follow(randomBuildingId, false)
-
-	debugPrint("Focussing industry with id " .. randomBuildingId)
-end
-
-local function focusRandomStation()
-	-- init randomness
-	math.randomseed(os.time())
-
-	-- get camera controller
-	local cameraController = api.gui.util.getGameUI():getMainRendererComponent():getCameraController()
-
-	-- get a random entity of specified type
-	local buildingIdList = (game.interface.getEntities({ radius = 1e100 }, { type = "STATION" }))
-
-	if next(buildingIdList) == nil then
-		debugPrint("abort focusRandomStation() because no station found")
-		return 
-	end
-
-	local randomBuildingId = buildingIdList[math.random(#buildingIdList)]
-	randomizeAnglesForFollowCam(20, 0)
-	cameraController:follow(randomBuildingId, false)
-
-	debugPrint("Focussing station with id " .. randomBuildingId)
+		debugPrint("Focussing building with id " .. randomBuildingId)
 end
 
 local function fullRandom()
 	math.randomseed(os.time()) -- init randomness
 
-	local rng = math.random(1, 2)
-	if(rng == 1) then setRandomPosition() end
-	if(rng == 2) then setRandomStreetView("BASE_EDGE") end
+	local rng = math.random(1, 5)
+
+	if(rng == 1) then setRandomPosition() end-- any random position
+		
+	if(rng == 2) then -- street view
+		local rng2 = math.random(1,3)
+		if(rng2 == 1) then setRandomEdgeView(api.type.ComponentType.BASE_EDGE) end
+		if(rng2 == 2) then setRandomEdgeView(api.type.ComponentType.BASE_EDGE_STREET) end
+		if(rng2 == 3) then setRandomEdgeView(api.type.ComponentType.BASE_EDGE_TRACK) end
+	end
+
+	if(rng == 3) then -- vehicle
+		local rng2 = math.random(1,5)
+		if(rng2 == 1) then followRandomVehicle() end
+		if(rng2 == 2) then followRandomVehicleOfType(api.type.ComponentType.TRAIN) end
+		if(rng2 == 3) then followRandomVehicleOfType(api.type.ComponentType.ROAD_VEHICLE) end
+		if(rng2 == 4) then followRandomVehicleOfType(api.type.ComponentType.SHIP) end
+		if(rng2 == 5) then followRandomVehicleOfType(api.type.ComponentType.AIRCRAFT) end
+	end
+
+	if (rng == 4) then -- organism
+		local rng2 = math.random(1,2)
+		if(rng2 == 1) then followRandomPerson() end
+		if(rng2 == 2) then followRandomAnimal() end
+	end
+
+	if(rng == 5) then -- structure
+		local rng2 = math.random(1,3)
+		if(rng2 == 1) then focusRandomBuilding("building/", 20, 80) end
+		if(rng2 == 2) then focusRandomBuilding("industry/", 30, 200) end
+		if(rng2 == 3) then focusRandomBuilding("station/", 30, 150) end
+	end
 end
 
 
@@ -323,17 +334,17 @@ local function buildWindow(geoguessrCamerasButton)
 
 	-- ROW: MISC / ANY
 	local rowMisc = api.gui.layout.BoxLayout.new("HORIZONTAL");
-	rowMisc:addItem(api.gui.comp.TextView.new(_("Misc:          ")))
+	rowMisc:addItem(api.gui.comp.TextView.new(_("Misc:            ")))
 
 	-- >> Random Position
-	local randomPosButton = createButton("Any Position", "Moves the camera to a completely random position anywhere on the map.")
+	local randomPosButton = createButton("Any Position", "Moves the camera to a completely random position anywhere on the map.", "ui/icons/game-menu/highlines@2x.tga")
 	rowMisc:addItem(randomPosButton)
 	randomPosButton:onClick(function()
 		setRandomPosition()
 	end) 
 
 	-- >> Full Random
-	local fullRandomButton = createButton("Anything", "Randomly chooses one of all the other available options.")
+	local fullRandomButton = createButton("Anything", "Randomly chooses one of all the other available options.", "ui/icons/construction-menu/filter_misc@2x.tga")
 	rowMisc:addItem(fullRandomButton)
 	fullRandomButton:onClick(function()
 		fullRandom()
@@ -342,24 +353,24 @@ local function buildWindow(geoguessrCamerasButton)
 
 	-- ROW: EDGES
 	local rowEdges = api.gui.layout.BoxLayout.new("HORIZONTAL");
-	rowEdges:addItem(api.gui.comp.TextView.new(_("Street View: ")))
+	rowEdges:addItem(api.gui.comp.TextView.new(_("Street View:")))
 
 	-- >> Random Edge (street / track)
-	local randomEdgeButton = createButton("Any Path", "Moves the camera to show a random street or rail track section from Street View position. Tunnels are excluded.")
+	local randomEdgeButton = createButton("Any Path", "Moves the camera to show a random street or rail track section from Street View position. Tunnels are excluded.", "ui/icons/construction-menu/category_street_construction@2x.tga")
 	rowEdges:addItem(randomEdgeButton)
 	randomEdgeButton:onClick(function() 
 		setRandomEdgeView(api.type.ComponentType.BASE_EDGE)
 	end)
 
 	-- >> Random Street
-	local randomStreetButton = createButton("Street", "Moves the camera to show a random street from Street View position. Tunnels are excluded.")
+	local randomStreetButton = createButton("Street", "Moves the camera to show a random street from Street View position. Tunnels are excluded.", "ui/icons/construction-menu/category_street@2x.tga")
 	rowEdges:addItem(randomStreetButton)
 	randomStreetButton:onClick(function() 
 		setRandomEdgeView(api.type.ComponentType.BASE_EDGE_STREET)
 	end)
 
 	-- >> Random Rail Track
-	local randomTrackButton = createButton("Rail Track", "Moves the camera to show a random rail track section from Street View position. Tunnels are excluded.")
+	local randomTrackButton = createButton("Rail Track", "Moves the camera to show a random rail track section from Street View position. Tunnels are excluded.", "ui/icons/construction-menu/category_tracks@2x.tga")
 	rowEdges:addItem(randomTrackButton)
 	randomTrackButton:onClick(function() 
 		setRandomEdgeView(api.type.ComponentType.BASE_EDGE_TRACK)
@@ -368,38 +379,38 @@ local function buildWindow(geoguessrCamerasButton)
 
 	-- ROW: VEHICLES
 	local rowVehicles = api.gui.layout.BoxLayout.new("HORIZONTAL")
-	rowVehicles:addItem(api.gui.comp.TextView.new(_("Vehicles:    ")))
+	rowVehicles:addItem(api.gui.comp.TextView.new(_("Vehicles:      ")))
 
 	-- >> Random Vehicle
-	local randomVehicleButton = createButton("Any", "Moves the camera to follow any random transport vehicle (no private vehicles).")
+	local randomVehicleButton = createButton("Any", "Moves the camera to follow any random transport vehicle (no private vehicles).", "ui/icons/game-menu/stats_vehicles@2x.tga")
 	rowVehicles:addItem(randomVehicleButton)
 	randomVehicleButton:onClick(function() 
 		followRandomVehicle()
 	end)
 
 	-- >> Random Train
-	local randomTrainButton = createButton("Train", "Moves the camera to follow a random train.")
+	local randomTrainButton = createButton("Train", "Moves the camera to follow a random train.", "ui/icons/game-menu/hud_filter_trains@2x.tga")
 	rowVehicles:addItem(randomTrainButton)
 	randomTrainButton:onClick(function() 
 		followRandomVehicleOfType(api.type.ComponentType.TRAIN)
 	end)
 
 	-- >> Random Road Vehicle
-	local randomRoadVehicleButton = createButton("Road Vehicle", "Moves the camera to follow a random road vehicle (truck / bus / tram).")
+	local randomRoadVehicleButton = createButton("Road Vehicle", "Moves the camera to follow a random road vehicle (truck / bus / tram).", "ui/icons/game-menu/hud_filter_road_vehicles@2x.tga")
 	rowVehicles:addItem(randomRoadVehicleButton)
 	randomRoadVehicleButton:onClick(function() 
 		followRandomVehicleOfType(api.type.ComponentType.ROAD_VEHICLE)
 	end)
 
 	-- >> Random Ship
-	local randomShipButton = createButton("Ship", "Moves the camera to follow a random ship.")
+	local randomShipButton = createButton("Ship", "Moves the camera to follow a random ship.", "ui/icons/game-menu/hud_filter_ships@2x.tga")
 	rowVehicles:addItem(randomShipButton)
 	randomShipButton:onClick(function() 
 		followRandomVehicleOfType(api.type.ComponentType.SHIP)
 	end)
 
 	-- >> Random Plane
-	local randomPlaneButton = createButton("Plane", "Moves the camera to follow a random plane.")
+	local randomPlaneButton = createButton("Plane", "Moves the camera to follow a random plane.", "ui/icons/game-menu/hud_filter_planes@2x.tga")
 	rowVehicles:addItem(randomPlaneButton)
 	randomPlaneButton:onClick(function() 
 		followRandomVehicleOfType(api.type.ComponentType.AIRCRAFT)
@@ -407,43 +418,43 @@ local function buildWindow(geoguessrCamerasButton)
 
 	-- ROW: STRUCTURES
 	local rowStructures = api.gui.layout.BoxLayout.new("HORIZONTAL")
-	rowStructures:addItem(api.gui.comp.TextView.new(_("Structures:")))
+	rowStructures:addItem(api.gui.comp.TextView.new(_("Structures:  ")))
 
 	-- >> Random Town Building
-	local randomTownBuildingButton = createButton("Town Building", "Moves the camera a random town building.")
+	local randomTownBuildingButton = createButton("Town Building", "Moves the camera a random town building.", "ui/icons/game-menu/hud_filter_towns@2x.tga")
 	rowStructures:addItem(randomTownBuildingButton)
 	randomTownBuildingButton:onClick(function() 
-		focusRandomTownBuilding()
+		focusRandomBuilding("building/", 20, 80)
 	end)
 
 	-- >> Random Industry
-	local randomIndustryButton = createButton("Industry", "Moves the camera a random industry.")
+	local randomIndustryButton = createButton("Industry", "Moves the camera a random industry.", "ui/icons/game-menu/hud_filter_industries@2x.tga")
 	rowStructures:addItem(randomIndustryButton)
 	randomIndustryButton:onClick(function() 
-		focusRandomIndustry()
+		focusRandomBuilding("industry/", 30, 200)
 	end)
 
 	-- >> Random Station
-	local randomStationButton = createButton("Station", "Moves the camera a random station of any kind.")
+	local randomStationButton = createButton("Station", "Moves the camera a random station of any kind.", "ui/icons/game-menu/hud_filter_stops@2x.tga")
 	rowStructures:addItem(randomStationButton)
 	randomStationButton:onClick(function() 
-		focusRandomStation()
+		focusRandomBuilding("station/", 30, 150)
 	end)
 	
 
 	-- ROW: ORGANISMS
 	local rowOrganisms = api.gui.layout.BoxLayout.new("HORIZONTAL")
-	rowOrganisms:addItem(api.gui.comp.TextView.new(_("Creatures: ")))
+	rowOrganisms:addItem(api.gui.comp.TextView.new(_("Creatures:   ")))
 
 	-- >> Random Person
-	local randomPersonButton = createButton("Person", "Moves the camera to follow any random person that is currently travelling by foot or private transport.")
+	local randomPersonButton = createButton("Person", "Moves the camera to follow any random person that is currently travelling by foot or private transport.", "ui/icons/game-menu/passengers@2x.tga")
 	rowOrganisms:addItem(randomPersonButton)
 	randomPersonButton:onClick(function() 
 		followRandomPerson()
 	end)
 
 	-- >> Random Animal
-	local randomAnimalButton = createButton("Animal", "Moves the camera to follow a random animal.")
+	local randomAnimalButton = createButton("Animal", "Moves the camera to follow a random animal.", "ui/icons/construction-menu/category_assets@2x.tga")
 	rowOrganisms:addItem(randomAnimalButton)
 	randomAnimalButton:onClick(function() 
 		followRandomAnimal()

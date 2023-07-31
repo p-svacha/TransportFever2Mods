@@ -1,2 +1,2 @@
-# Dynamic Town Spawns
-This mods adds the feature of new towns being created during the game. Similar to the way that new industries can spawn during a playthrough, the same thing can now happen with towns!
+# Geoguessr Cameras
+This mods adds new camera tools to the game. Inspired by the likes of Geoguessr or randomstreetview.com, these new camera tools will bring you to a random point on the map of some sorts. There are many different modes implemented, for example you can follow a random person, or jump to a random industry, or jump to a fully random position anywhere on the map. And that is all this mod does, it provides tools to move the camera. Nothing more, nothing less.
