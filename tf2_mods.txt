@@ -42,17 +42,8 @@ returns the 3D world coordinates corresponding to the user's screen cursor, like
 
 MOD IDEAS:
 ------------------------------
-Hamlets:
-	- try building monuments with game.interface.buildConstruction(fileName, param, transf)
+Hamlets: done, test it out before release
 
-Geoguessr mod:
-- change structure cameras to use "cameraController:follow(-1, false)" and "setCameraPosition" instead of follow
-- rework toggle icon to open/close window
-- prepare workshop stuff (thumbnail, tags, in-game thumbnail, description, in-game description, screenshots)
-cameras to add:
-town as a whole
+Snowball's Distance meter Update: done, contact author
 
-
-Snowball's Distance meter - update to work with new version
-
-Combined Climate: New climate that uses all textures and assets
+Combined Climate: idea, New climate that uses all textures and assets
